@@ -1,0 +1,177 @@
+﻿<Page x:Class="SignifyUI.HomePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="HomePage">
+
+    <Grid Margin="20" Background="White">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- TOP BAR -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="Signify"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       VerticalAlignment="Center"/>
+
+            <Button Grid.Column="1"
+                    Content="Home"
+                    Width="90"
+                    Margin="10,0"/>
+
+            <Button Grid.Column="3"
+                    Content="⚙"
+                    Width="50"
+                    Margin="10,0"/>
+
+            <Button Grid.Column="4"
+                    Content="👤"
+                    Width="50"
+                    Margin="10,0"/>
+        </Grid>
+
+        <!-- HEADER -->
+        <StackPanel Grid.Row="1"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,40">
+
+            <TextBlock Text="Welcome to Signify"
+                       FontSize="32"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center"/>
+
+            <TextBlock Text="Continue your journey to master American Sign Language"
+                       FontSize="14"
+                       HorizontalAlignment="Center"
+                       Margin="0,10,0,0"/>
+        </StackPanel>
+
+        <!-- CARDS -->
+        <UniformGrid Grid.Row="2"
+                     Rows="2"
+                     Columns="2"
+                     HorizontalAlignment="Center">
+
+            <!-- Freehand -->
+            <Border Width="420"
+                    Height="220"
+                    Margin="15"
+                    BorderThickness="1">
+                <StackPanel VerticalAlignment="Center">
+
+                    <TextBlock Text="Freehand Mode"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,20,0,10"/>
+
+                    <TextBlock Text="Practice signing naturally with real-time hand tracking and feedback."
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Margin="20,0"/>
+
+                    <Button Content="Start Practice"
+                            Width="200"
+                            Height="35"
+                            Margin="0,20,0,0"
+                            HorizontalAlignment="Center"
+                            Click="Freehand_Click"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Learn -->
+            <Border Width="420"
+                    Height="220"
+                    Margin="15"
+                    BorderThickness="1">
+                <StackPanel VerticalAlignment="Center">
+
+                    <TextBlock Text="Learn Mode"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,20,0,10"/>
+
+                    <TextBlock Text="Structured lessons covering alphabet, vocabulary, and grammar basics."
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Margin="20,0"/>
+
+                    <Button Content="Resume Course"
+                            Width="200"
+                            Height="35"
+                            Margin="0,20,0,0"
+                            HorizontalAlignment="Center"
+                            Click="Learn_Click"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Sentence Builder -->
+            <Border Width="420"
+                    Height="220"
+                    Margin="15"
+                    BorderThickness="1">
+                <StackPanel VerticalAlignment="Center">
+
+                    <TextBlock Text="Sentence Builder"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,20,0,10"/>
+
+                    <TextBlock Text="Combine individual signs to master fluid conversational structures."
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Margin="20,0"/>
+
+                    <Button Content="Begin Sandbox"
+                            Width="200"
+                            Height="35"
+                            Margin="0,20,0,0"
+                            HorizontalAlignment="Center"
+                            Click="Sentence_Click"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Settings -->
+            <Border Width="420"
+                    Height="220"
+                    Margin="15"
+                    BorderThickness="1">
+                <StackPanel VerticalAlignment="Center">
+
+                    <TextBlock Text="Settings"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,20,0,10"/>
+
+                    <TextBlock Text="Calibrate camera tracking, customize avatar, and manage your profile."
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Margin="20,0"/>
+
+                    <Button Content="Configure"
+                            Width="200"
+                            Height="35"
+                            Margin="0,20,0,0"
+                            HorizontalAlignment="Center"
+                            Click="Settings_Click"/>
+                </StackPanel>
+            </Border>
+
+        </UniformGrid>
+    </Grid>
+</Page>
