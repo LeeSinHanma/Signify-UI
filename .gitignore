@@ -258,6 +258,20 @@ _UpgradeReport_Files/
 Backup*/
 UpgradeLog*.XML
 UpgradeLog*.htm
+
+# Additional local/dev tooling files
+.vscode/
+.idea/
+
+# Local secrets/env files
+.env
+.env.*
+!.env.example
+
+# Temporary files
+*.tmp
+*.temp
+*.orig
 ServiceFabricBackup/
 *.rptproj.bak
 

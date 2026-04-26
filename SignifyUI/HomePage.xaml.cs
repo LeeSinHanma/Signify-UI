@@ -27,7 +27,7 @@ namespace SignifyUI
 
         private void Settings_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Settings clicked");
+            NavigationService?.Navigate(new CameraTest());
         }
     }
 }
