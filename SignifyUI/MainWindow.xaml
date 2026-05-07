@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Signify"
         Width="1280"
-        Height="1024"
+        Height="980"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
 
