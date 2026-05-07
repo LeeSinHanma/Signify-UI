@@ -55,19 +55,10 @@
             <Setter Property="Margin"      Value="4"/>
         </Style>
 
-        <!-- Alphabet tile: UNLOCKED but not selected (dark, white text) -->
+        <!-- Alphabet tile: UNLOCKED / default state (dark, white text) -->
         <Style x:Key="LetterBtn_Unlocked" TargetType="Button" BasedOn="{StaticResource BaseRoundedBtn}">
             <Setter Property="Background"  Value="#1C1C38"/>
             <Setter Property="Foreground"  Value="White"/>
-            <Setter Property="Width"       Value="62"/>
-            <Setter Property="Height"      Value="62"/>
-            <Setter Property="Margin"      Value="4"/>
-        </Style>
-
-        <!-- Alphabet tile: LOCKED state (dimmed, lock icon shown) -->
-        <Style x:Key="LetterBtn_Locked" TargetType="Button" BasedOn="{StaticResource BaseRoundedBtn}">
-            <Setter Property="Background"  Value="#14142A"/>
-            <Setter Property="Foreground"  Value="#444460"/>
             <Setter Property="Width"       Value="62"/>
             <Setter Property="Height"      Value="62"/>
             <Setter Property="Margin"      Value="4"/>
@@ -135,9 +126,9 @@
              Back ← | Signify | Learn Mode | ? ⚙
         ════════════════════════════════════════════════════════ -->
         <Border Grid.Row="0" Background="#0D0D20" Grid.ColumnSpan="2">
-            
+
             <Grid Margin="14,0">
-                
+
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <!-- Back button   -->
@@ -151,9 +142,7 @@
                     <!-- Help/Settings -->
                 </Grid.ColumnDefinitions>
 
-                <!-- ── BACK BUTTON ──
-                     Navigates back to the main menu via NavigationService.
-                     Click handler is wired in the code-behind.               -->
+                <!-- ── BACK BUTTON ── -->
                 <Button x:Name="btnBack"
                         Grid.Column="0"
                         Content="←"
@@ -193,11 +182,9 @@
                 <StackPanel Grid.Column="4"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <!-- Opens a help dialog/overlay -->
                     <Button x:Name="btnHelp"
                             Content="?" Style="{StaticResource IconBtn}"
                             ToolTip="Help" Margin="0,0,8,0"/>
-                    <!-- Navigates to Settings page -->
                     <Button x:Name="btnSettings"
                             Content="⚙" Style="{StaticResource IconBtn}"
                             ToolTip="Settings"/>
@@ -210,24 +197,24 @@
         <!-- ════════════════════════════════════════════════════════
              ROW 1 — MAIN CONTENT AREA  (3 columns)
                Col 0 — Alphabet Library panel
-               Col 1 — Letter detail + image + tip
-               Col 2 — Live cam + AI recognition + streak
+               Col 1 — Live cam + AI recognition (MOVED HERE)
+               Col 2 — Hand sign image + tip + nav (MOVED HERE)
         ════════════════════════════════════════════════════════ -->
         <Grid Grid.Row="1" Margin="8,10,12,12" Grid.Column="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="224"/>
                 <!-- Left panel  -->
                 <ColumnDefinition Width="*"/>
-                <!-- Center      -->
+                <!-- Center — camera -->
                 <ColumnDefinition Width="276"/>
-                <!-- Right panel -->
+                <!-- Right panel — hand sign -->
             </Grid.ColumnDefinitions>
 
 
             <!-- ══════════════════════════════════════════════════
                  COL 0 — ALPHABET LIBRARY
-                 Title + mastery counter + scrollable letter grid.
-                 Three states: Active (purple), Unlocked, Locked.
+                 All 26 letters are now clickable and unlocked.
+                 Click handler: btnLetter_Click in code-behind.
             ══════════════════════════════════════════════════ -->
             <Border Grid.Column="0"
                     Background="#161630"
@@ -243,7 +230,7 @@
                                FontFamily="Segoe UI"
                                Margin="0,0,0,2"/>
 
-                    <!-- Mastery progress counter — update Text in code-behind -->
+                    <!-- Mastery progress counter -->
                     <TextBlock x:Name="lblMastery"
                                Text="MASTERY: 12 / 26"
                                Foreground="#555577"
@@ -256,182 +243,268 @@
                                   HorizontalScrollBarVisibility="Disabled">
                         <UniformGrid x:Name="gridAlphabet" Columns="3">
 
-                            <!-- ── A  (ACTIVE / selected) ── -->
+                            <!-- ── A  (ACTIVE / selected by default) ── -->
                             <Button x:Name="btnLetterA"
+                                    Tag="A"
                                     Style="{StaticResource LetterBtn_Active}"
+                                    Click="btnLetter_Click"
                                     ToolTip="Letter A">
                                 <StackPanel HorizontalAlignment="Center">
                                     <TextBlock Text="A" FontSize="18" FontWeight="Bold"
                                                Foreground="White" HorizontalAlignment="Center"/>
-                                    <!-- Progress underline shown on active tile -->
                                     <Rectangle Height="2" Fill="White" Width="22"
                                                Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
 
-                            <!-- ── B  (UNLOCKED, not selected) ── -->
-                            <Button x:Name="btnLetterB"
+                            <!-- ── B through Z — all unlocked, all clickable ── -->
+                            <Button x:Name="btnLetterB" Tag="B"
                                     Style="{StaticResource LetterBtn_Unlocked}"
-                                    ToolTip="Letter B">
+                                    Click="btnLetter_Click" ToolTip="Letter B">
                                 <StackPanel HorizontalAlignment="Center">
                                     <TextBlock Text="B" FontSize="18" FontWeight="Bold"
                                                Foreground="White" HorizontalAlignment="Center"/>
-                                    <Rectangle Height="2" Fill="#444466" Width="22"
-                                               Margin="0,5,0,0"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
 
-                            <!-- ── C  (UNLOCKED) ── -->
-                            <Button x:Name="btnLetterC"
+                            <Button x:Name="btnLetterC" Tag="C"
                                     Style="{StaticResource LetterBtn_Unlocked}"
-                                    ToolTip="Letter C">
+                                    Click="btnLetter_Click" ToolTip="Letter C">
                                 <StackPanel HorizontalAlignment="Center">
                                     <TextBlock Text="C" FontSize="18" FontWeight="Bold"
                                                Foreground="White" HorizontalAlignment="Center"/>
-                                    <Rectangle Height="2" Fill="#444466" Width="22"
-                                               Margin="0,5,0,0"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
 
-                            <!-- ── D through Z  (LOCKED) ──
-                                 All share the LetterBtn_Locked style.
-                                 Lock icon signals the letter is not yet unlocked. -->
-                            <Button x:Name="btnLetterD" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+                            <Button x:Name="btnLetterD" Tag="D"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter D">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="D" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="D" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterE" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterE" Tag="E"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter E">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="E" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="E" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterF" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterF" Tag="F"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter F">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="F" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="F" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterG" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterG" Tag="G"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter G">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="G" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="G" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterH" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterH" Tag="H"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter H">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="H" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="H" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterI" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterI" Tag="I"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter I">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="I" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="I" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterJ" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterJ" Tag="J"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter J">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="J" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="J" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterK" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterK" Tag="K"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter K">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="K" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="K" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterL" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterL" Tag="L"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter L">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="L" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="L" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterM" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterM" Tag="M"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter M">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="M" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="M" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterN" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterN" Tag="N"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter N">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="N" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="N" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterO" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterO" Tag="O"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter O">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="O" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="O" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterP" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterP" Tag="P"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter P">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="P" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="P" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterQ" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterQ" Tag="Q"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter Q">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="Q" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="Q" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterR" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterR" Tag="R"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter R">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="R" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="R" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterS" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterS" Tag="S"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter S">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="S" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="S" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterT" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterT" Tag="T"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter T">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="T" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="T" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterU" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterU" Tag="U"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter U">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="U" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="U" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterV" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterV" Tag="V"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter V">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="V" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="V" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterW" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterW" Tag="W"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter W">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="W" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="W" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterX" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterX" Tag="X"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter X">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="X" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="X" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterY" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterY" Tag="Y"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter Y">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="Y" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="Y" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="btnLetterZ" Style="{StaticResource LetterBtn_Locked}" ToolTip="Locked">
+
+                            <Button x:Name="btnLetterZ" Tag="Z"
+                                    Style="{StaticResource LetterBtn_Unlocked}"
+                                    Click="btnLetter_Click" ToolTip="Letter Z">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="Z" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="🔒" FontSize="8"  HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    <TextBlock Text="Z" FontSize="18" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                    <Rectangle Height="2" Fill="#444466" Width="22" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Button>
 
@@ -442,201 +515,15 @@
 
 
             <!-- ══════════════════════════════════════════════════
-                 COL 1 — CENTER: Letter detail, image, tip
+                 COL 1 — CENTER: Live cam + AI recognition
+                 (Previously was in Col 2 — now moved to center)
             ══════════════════════════════════════════════════ -->
             <Grid Grid.Column="1" Margin="0,0,10,0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
-                    <!-- Letter card + image + nav  -->
-                    <RowDefinition Height="Auto"/>
-                    <!-- Pro Tip card at bottom     -->
-                </Grid.RowDefinitions>
-
-                <!-- ── LETTER DETAIL CARD ── -->
-                <Border Grid.Row="0"
-                        Background="#161630"
-                        CornerRadius="14"
-                        Margin="0,0,0,10"
-                        Padding="20,18">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <!-- Title + badge      -->
-                            <RowDefinition Height="Auto"/>
-                            <!-- ASL subtitle       -->
-                            <RowDefinition Height="*"/>
-                            <!-- Hand sign image    -->
-                            <RowDefinition Height="Auto"/>
-                            <!-- Prev / Next buttons -->
-                        </Grid.RowDefinitions>
-
-                        <!-- Letter title + difficulty badge side by side -->
-                        <Grid Grid.Row="0" Margin="0,0,0,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Current letter name — update Text in code-behind -->
-                            <TextBlock x:Name="lblLetterTitle"
-                                       Text="Letter A"
-                                       Foreground="White"
-                                       FontSize="28" FontWeight="Bold"
-                                       FontFamily="Segoe UI"
-                                       VerticalAlignment="Center"/>
-
-                            <!-- BEGINNER difficulty badge (pill shape) -->
-                            <Border Grid.Column="1"
-                                    Background="#2A2418"
-                                    BorderBrush="#F5C518"
-                                    BorderThickness="1"
-                                    CornerRadius="12"
-                                    Padding="10,4"
-                                    VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="⚡ " Foreground="#F5C518" FontSize="11"/>
-                                    <TextBlock x:Name="lblDifficulty"
-                                               Text="BEGINNER"
-                                               Foreground="#F5C518"
-                                               FontSize="10" FontWeight="Bold"
-                                               FontFamily="Segoe UI"/>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-
-                        <!-- ASL subtitle label -->
-                        <TextBlock Grid.Row="1"
-                                   Text="AMERICAN SIGN LANGUAGE"
-                                   Foreground="#555577"
-                                   FontSize="10" FontWeight="Bold"
-                                   FontFamily="Segoe UI"
-                                   Margin="0,0,0,14"/>
-
-                        <!-- Hand sign reference image placeholder
-                             Replace Source with actual image path per letter -->
-                        <Border Grid.Row="2"
-                                Background="#1A1A30"
-                                CornerRadius="12"
-                                Margin="0,0,0,16">
-                            <Grid>
-                                <!-- Swap this Image.Source when backend loads assets -->
-                                <Image x:Name="imgHandSign"
-                                       Stretch="UniformToFill"
-                                       RenderOptions.BitmapScalingMode="HighQuality"/>
-                                <!-- Shown only while image source is empty -->
-                                <TextBlock Text="[ Hand Sign Image ]"
-                                           Foreground="#333355" FontSize="16"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           IsHitTestVisible="False"/>
-                            </Grid>
-                        </Border>
-
-                        <!-- Previous / Next Letter navigation buttons -->
-                        <StackPanel Grid.Row="3"
-                                    Orientation="Horizontal"
-                                    HorizontalAlignment="Center">
-
-                            <!-- Goes to the previous ASL letter -->
-                            <Button x:Name="btnPrevLetter"
-                                    Content="◄  Previous"
-                                    Style="{StaticResource NavBtn}"
-                                    Background="#1E1E38"
-                                    Width="140"
-                                    Margin="0,0,12,0"
-                                    ToolTip="Previous Letter"/>
-
-                            <!-- Goes to the next ASL letter (primary action, purple) -->
-                            <Button x:Name="btnNextLetter"
-                                    Style="{StaticResource NavBtn}"
-                                    Background="#7B61FF"
-                                    FontWeight="Bold"
-                                    Width="140"
-                                    ToolTip="Next Letter">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="Next" Foreground="White"
-                                               FontSize="13" FontWeight="Bold"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Text=" Letter  ►" Foreground="White"
-                                               FontSize="13"
-                                               VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- ── PRO TIP CARD ──
-                     Shows a contextual tip for the current letter.
-                     Update lblProTipText in code-behind per letter.     -->
-                <Border Grid.Row="1"
-                        x:Name="pnlProTip"
-                        Background="#161630"
-                        CornerRadius="14"
-                        Padding="14,12">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <!-- Circle icon     -->
-                            <ColumnDefinition Width="*"/>
-                            <!-- Tip text        -->
-                            <ColumnDefinition Width="Auto"/>
-                            <!-- Audio icon      -->
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Decorative yellow circle icon -->
-                        <Border Grid.Column="0"
-                                Width="36" Height="36"
-                                CornerRadius="18"
-                                Background="#2A2418"
-                                BorderBrush="#F5C518"
-                                BorderThickness="2"
-                                Margin="0,0,12,0"
-                                VerticalAlignment="Center">
-                            <TextBlock Text="💡" FontSize="14"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
-                        </Border>
-
-                        <!-- Tip content: heading + body -->
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Pro Tip"
-                                       Foreground="White"
-                                       FontSize="12" FontWeight="Bold"
-                                       FontFamily="Segoe UI"
-                                       Margin="0,0,0,2"/>
-                            <!-- Update this text when the user selects a letter -->
-                            <TextBlock x:Name="lblProTipText"
-                                       Text="Keep your thumb pressed against the side of your index finger."
-                                       Foreground="#8888AA"
-                                       FontSize="11"
-                                       FontFamily="Segoe UI"
-                                       TextWrapping="Wrap"/>
-                        </StackPanel>
-
-                        <!-- Audio play button — plays tip audio later -->
-                        <Button x:Name="btnPlayTipAudio"
-                                Grid.Column="2"
-                                Content="🔊"
-                                Style="{StaticResource IconBtn}"
-                                ToolTip="Play Audio Tip"
-                                Margin="10,0,0,0"/>
-                    </Grid>
-                </Border>
-
-            </Grid>
-
-
-            <!-- ══════════════════════════════════════════════════
-                 COL 2 — RIGHT: Live cam + AI result + streak
-            ══════════════════════════════════════════════════ -->
-            <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
                     <!-- Camera feed card  -->
                     <RowDefinition Height="Auto"/>
-                    <!-- Practice streak   -->
+                    <!-- Pro Tip card at bottom -->
                 </Grid.RowDefinitions>
 
                 <!-- ── LIVE CAMERA CARD ── -->
@@ -664,7 +551,6 @@
                                 CornerRadius="10"
                                 Padding="8,4">
                             <StackPanel Orientation="Horizontal">
-                                <!-- Pulsing red dot indicator -->
                                 <Ellipse x:Name="dotLive"
                                          Width="8" Height="8"
                                          Fill="#FF3A3A"
@@ -698,13 +584,11 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0">
-                                    <!-- Section label -->
                                     <TextBlock Text="AI RECOGNITION"
                                                Foreground="#666688"
                                                FontSize="9" FontWeight="Bold"
                                                FontFamily="Segoe UI"
                                                Margin="0,0,0,4"/>
-                                    <!-- Match percentage — update lblMatchPct in code-behind -->
                                     <TextBlock x:Name="lblMatchPct"
                                                Text="Matching: 89%"
                                                Foreground="White"
@@ -719,7 +603,6 @@
                                         Padding="10,6"
                                         VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
-                                        <!-- Detected letter — update lblDetectedLetter.Text -->
                                         <TextBlock x:Name="lblDetectedLetter"
                                                    Text="A"
                                                    Foreground="White"
@@ -727,7 +610,6 @@
                                                    FontFamily="Segoe UI"
                                                    VerticalAlignment="Center"
                                                    Margin="0,0,6,0"/>
-                                        <!-- Checkmark shown when detection matches target -->
                                         <TextBlock x:Name="lblMatchCheck"
                                                    Text="✔"
                                                    Foreground="#A0FFA0"
@@ -739,6 +621,177 @@
                             </Grid>
                         </Border>
 
+                    </Grid>
+                </Border>
+
+                <!-- ── PRO TIP CARD ── -->
+                <Border Grid.Row="1"
+                        x:Name="pnlProTip"
+                        Background="#161630"
+                        CornerRadius="14"
+                        Padding="14,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Width="36" Height="36"
+                                CornerRadius="18"
+                                Background="#2A2418"
+                                BorderBrush="#F5C518"
+                                BorderThickness="2"
+                                Margin="0,0,12,0"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="💡" FontSize="14"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Pro Tip"
+                                       Foreground="White"
+                                       FontSize="12" FontWeight="Bold"
+                                       FontFamily="Segoe UI"
+                                       Margin="0,0,0,2"/>
+                            <TextBlock x:Name="lblProTipText"
+                                       Text="Keep your thumb pressed against the side of your index finger."
+                                       Foreground="#8888AA"
+                                       FontSize="11"
+                                       FontFamily="Segoe UI"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <Button x:Name="btnPlayTipAudio"
+                                Grid.Column="2"
+                                Content="🔊"
+                                Style="{StaticResource IconBtn}"
+                                ToolTip="Play Audio Tip"
+                                Margin="10,0,0,0"/>
+                    </Grid>
+                </Border>
+
+            </Grid>
+
+
+            <!-- ══════════════════════════════════════════════════
+                 COL 2 — RIGHT: Letter detail card + hand sign image + nav
+                 (Previously was in Col 1 — now moved to the right)
+            ══════════════════════════════════════════════════ -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <!-- Letter card + image + nav -->
+                </Grid.RowDefinitions>
+
+                <!-- ── LETTER DETAIL CARD ── -->
+                <Border Grid.Row="0"
+                        Background="#161630"
+                        CornerRadius="14"
+                        Padding="20,18">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <!-- Title + badge      -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- ASL subtitle       -->
+                            <RowDefinition Height="*"/>
+                            <!-- Hand sign image    -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Prev / Next buttons -->
+                        </Grid.RowDefinitions>
+
+                        <!-- Letter title + difficulty badge -->
+                        <Grid Grid.Row="0" Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock x:Name="lblLetterTitle"
+                                       Text="Letter A"
+                                       Foreground="White"
+                                       FontSize="28" FontWeight="Bold"
+                                       FontFamily="Segoe UI"
+                                       VerticalAlignment="Center"/>
+
+                            <Border Grid.Column="1"
+                                    Background="#2A2418"
+                                    BorderBrush="#F5C518"
+                                    BorderThickness="1"
+                                    CornerRadius="12"
+                                    Padding="10,4"
+                                    VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⚡ " Foreground="#F5C518" FontSize="11"/>
+                                    <TextBlock x:Name="lblDifficulty"
+                                               Text="BEGINNER"
+                                               Foreground="#F5C518"
+                                               FontSize="10" FontWeight="Bold"
+                                               FontFamily="Segoe UI"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- ASL subtitle label -->
+                        <TextBlock Grid.Row="1"
+                                   Text="AMERICAN SIGN LANGUAGE"
+                                   Foreground="#555577"
+                                   FontSize="10" FontWeight="Bold"
+                                   FontFamily="Segoe UI"
+                                   Margin="0,0,0,14"/>
+
+                        <!-- Hand sign reference image -->
+                        <Border Grid.Row="2"
+                                Background="#1A1A30"
+                                CornerRadius="12"
+                                Margin="0,0,0,16">
+                            <Grid>
+                                <Image x:Name="imgHandSign"
+                                       Stretch="UniformToFill"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                                <TextBlock Text="[ Hand Sign Image ]"
+                                           Foreground="#333355" FontSize="16"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           IsHitTestVisible="False"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Previous / Next Letter navigation buttons -->
+                        <StackPanel Grid.Row="3"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
+
+                            <Button x:Name="btnPrevLetter"
+                                    Content="◄  Prev"
+                                    Style="{StaticResource NavBtn}"
+                                    Background="#1E1E38"
+                                    Width="110"
+                                    Margin="0,0,10,0"
+                                    Click="btnPrevLetter_Click"
+                                    ToolTip="Previous Letter"/>
+
+                            <Button x:Name="btnNextLetter"
+                                    Style="{StaticResource NavBtn}"
+                                    Background="#7B61FF"
+                                    FontWeight="Bold"
+                                    Width="110"
+                                    Click="btnNextLetter_Click"
+                                    ToolTip="Next Letter">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Next" Foreground="White"
+                                               FontSize="13" FontWeight="Bold"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text=" ►" Foreground="White"
+                                               FontSize="13"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                        </StackPanel>
                     </Grid>
                 </Border>
 
