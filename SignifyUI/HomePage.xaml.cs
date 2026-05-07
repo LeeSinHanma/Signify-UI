@@ -62,20 +62,16 @@ namespace SignifyUI
             NavigationService.Navigate(new LearnPage());
         }
 
-        // Sentence Builder — placeholder until page is built
+        // Sentence Builder — navigates to SentenceBuilderPage
         private void btnCardSentenceBuilder_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Sentence Builder — coming soon!", "Signify",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
-            // TODO: NavigationService.Navigate(new SentenceBuilderPage());
+            NavigationService.Navigate(new SentenceBuilderPage());
         }
 
-        // Settings — placeholder until page is built
+        // Settings — navigates to SettingsPage
         private void btnCardSettings_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Settings — coming soon!", "Signify",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
-            // TODO: NavigationService.Navigate(new SettingsPage());
+            NavigationService.Navigate(new SettingsPage());
         }
     }
 }

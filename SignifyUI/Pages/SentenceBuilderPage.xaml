@@ -1,0 +1,466 @@
+<Page x:Class="Signify.Pages.SentenceBuilderPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Sentence Builder"
+      Background="#12122A">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PAGE-LEVEL STYLES
+    ═══════════════════════════════════════════════════════════ -->
+    <Page.Resources>
+
+        <!-- Base template that gives every Button a CornerRadius + hover feedback -->
+        <Style x:Key="BaseRoundedBtn" TargetType="Button">
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily"      Value="Segoe UI"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="10"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.80"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.60"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Small square icon button — header icons and sidebar icons -->
+        <Style x:Key="IconBtn" TargetType="Button" BasedOn="{StaticResource BaseRoundedBtn}">
+            <Setter Property="Background"  Value="#252540"/>
+            <Setter Property="Foreground"  Value="White"/>
+            <Setter Property="Width"       Value="36"/>
+            <Setter Property="Height"      Value="36"/>
+            <Setter Property="FontSize"    Value="14"/>
+        </Style>
+
+        <!-- Left sidebar action buttons (CLEAR, DEL, SPACE) -->
+        <Style x:Key="SidebarActionBtn" TargetType="Button" BasedOn="{StaticResource BaseRoundedBtn}">
+            <Setter Property="Background"  Value="#1C1C38"/>
+            <Setter Property="Foreground"  Value="White"/>
+            <Setter Property="Width"       Value="48"/>
+            <Setter Property="Height"      Value="48"/>
+            <Setter Property="FontSize"    Value="11"/>
+            <Setter Property="FontWeight"  Value="SemiBold"/>
+            <Setter Property="Margin"      Value="0,6"/>
+        </Style>
+
+        <!-- Letter tile: ACTIVE state (orange filled) -->
+        <Style x:Key="LetterTile_Active" TargetType="Button" BasedOn="{StaticResource BaseRoundedBtn}">
+            <Setter Property="Background"  Value="#D97B20"/>
+            <Setter Property="Foreground"  Value="White"/>
+            <Setter Property="Width"       Value="48"/>
+            <Setter Property="Height"      Value="48"/>
+            <Setter Property="FontSize"    Value="14"/>
+            <Setter Property="FontWeight"  Value="Bold"/>
+            <Setter Property="Margin"      Value="4"/>
+        </Style>
+
+        <!-- Letter tile: PLACEHOLDER state (dashed, empty) -->
+        <Style x:Key="LetterTile_Empty" TargetType="Button" BasedOn="{StaticResource BaseRoundedBtn}">
+            <Setter Property="Background"  Value="Transparent"/>
+            <Setter Property="Foreground"  Value="#555577"/>
+            <Setter Property="Width"       Value="48"/>
+            <Setter Property="Height"      Value="48"/>
+            <Setter Property="FontSize"    Value="14"/>
+            <Setter Property="FontWeight"  Value="Bold"/>
+            <Setter Property="Margin"      Value="4"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="#444466"/>
+        </Style>
+
+    </Page.Resources>
+
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ROOT: Two rows — header strip + main content area
+    ═══════════════════════════════════════════════════════════ -->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="4*"/>
+            <ColumnDefinition Width="957*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52"/>
+            <!-- Top header bar        -->
+            <RowDefinition Height="*"/>
+            <!-- Everything else below -->
+        </Grid.RowDefinitions>
+
+
+        <!-- ════════════════════════════════════════════════════════
+             ROW 0 — TOP HEADER BAR
+             Back ← | Signify | Sentence Builder | LVL XX | ? ⚙
+        ════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="#0D0D20" Grid.ColumnSpan="2">
+            
+            <Grid Margin="14,0">
+                
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Back button   -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Logo text     -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Divider       -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Mode label    -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Spacer        -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Level badge   -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Help/Settings -->
+                </Grid.ColumnDefinitions>
+
+                <!-- ── BACK BUTTON ──
+                     Navigates back to the main menu via NavigationService.
+                     Click handler is wired in the code-behind.               -->
+                <Button x:Name="btnBack"
+                        Grid.Column="0"
+                        Content="←"
+                        Style="{StaticResource IconBtn}"
+                        ToolTip="Back to Main Menu"
+                        Click="btnBack_Click"
+                        Margin="0,0,12,0"/>
+
+                <!-- ── APP LOGO ── -->
+                <TextBlock x:Name="lblAppName"
+                           Grid.Column="1"
+                           Text="Signify"
+                           Foreground="#7B61FF"
+                           FontSize="20" FontWeight="Bold"
+                           FontFamily="Segoe UI"
+                           VerticalAlignment="Center"
+                           Margin="0,0,24,0"/>
+                <!-- DIVIDER -->
+                <Rectangle Grid.Column="2"
+                           Width="1"
+                           Height="22"
+                           Margin="18,0"
+                           Fill="#44445C"
+                           VerticalAlignment="Center"/>
+
+                <!-- MODE LABEL -->
+                <TextBlock x:Name="lblModeTitle"
+                           Grid.Column="3"
+                           Text="Sentence Builder"
+                           Foreground="#9A9AB3"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           FontFamily="Segoe UI"
+                           VerticalAlignment="Center"
+                           Margin="18,0,0,0"/>
+
+                <!-- LEVEL BADGE - positioned right before help/settings -->
+                <Border Grid.Column="5"
+                        HorizontalAlignment="Right"
+                        Background="#1C1C38"
+                        CornerRadius="8"
+                        Padding="8,4"
+                        Margin="0,0,16,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🏅" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="lblLevel"
+                                   Text="LVL 12"
+                                   Foreground="#D97B20"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   FontFamily="Segoe UI"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── HEADER ICON BUTTONS ── -->
+                <StackPanel Grid.Column="6"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <!-- Opens a help dialog/overlay -->
+                    <Button x:Name="btnHelp"
+                            Content="?" Style="{StaticResource IconBtn}"
+                            ToolTip="Help" Margin="0,0,8,0"/>
+                    <!-- Navigates to Settings page -->
+                    <Button x:Name="btnSettings"
+                            Content="⚙" Style="{StaticResource IconBtn}"
+                            ToolTip="Settings"/>
+                </StackPanel>
+
+            </Grid>
+        </Border>
+
+
+        <!-- ════════════════════════════════════════════════════════
+             ROW 1 — MAIN CONTENT AREA  (3 columns)
+               Col 0 — Left sidebar with action buttons
+               Col 1 — Center: text input + camera + recognition
+               Col 2 — (reserved for future expansion)
+        ════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="1" Margin="8,10,12,12" Grid.Column="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <!-- Left sidebar -->
+                <ColumnDefinition Width="*"/>
+                <!-- Main content area -->
+            </Grid.ColumnDefinitions>
+
+
+            <!-- ══════════════════════════════════════════════════
+                 COL 0 — LEFT SIDEBAR
+                 Vertical stack of action buttons
+            ══════════════════════════════════════════════════ -->
+            <Border Grid.Column="0"
+                    Background="#161630"
+                    CornerRadius="14"
+                    Margin="0,0,10,0"
+                    Padding="8,12"
+                    Width="64">
+                <StackPanel VerticalAlignment="Top">
+
+                    <!-- CLEAR button -->
+                    <Button x:Name="btnClear"
+                            Style="{StaticResource SidebarActionBtn}"
+                            ToolTip="Clear all">
+                        <StackPanel>
+                            <TextBlock Text="⟲" FontSize="20" HorizontalAlignment="Center" Margin="0,0,0,2"/>
+                            <TextBlock Text="CLEAR" FontSize="8" HorizontalAlignment="Center" Foreground="#9090B0"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- DELETE button -->
+                    <Button x:Name="btnDelete"
+                            Style="{StaticResource SidebarActionBtn}"
+                            ToolTip="Delete last">
+                        <StackPanel>
+                            <TextBlock Text="⌫" FontSize="20" HorizontalAlignment="Center" Margin="0,0,0,2"/>
+                            <TextBlock Text="DEL" FontSize="8" HorizontalAlignment="Center" Foreground="#9090B0"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- SPACE button -->
+                    <Button x:Name="btnSpace"
+                            Style="{StaticResource SidebarActionBtn}"
+                            ToolTip="Add space">
+                        <StackPanel>
+                            <TextBlock Text="␣" FontSize="20" HorizontalAlignment="Center" Margin="0,0,0,2"/>
+                            <TextBlock Text="SPACE" FontSize="8" HorizontalAlignment="Center" Foreground="#9090B0"/>
+                        </StackPanel>
+                    </Button>
+
+                </StackPanel>
+            </Border>
+
+
+            <!-- ══════════════════════════════════════════════════
+                 COL 1 — MAIN CONTENT
+                 Three rows: text input, camera feed, letter tiles
+            ══════════════════════════════════════════════════ -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Text input section     -->
+                    <RowDefinition Height="*"/>
+                    <!-- Camera + recognition  -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Letter tiles section   -->
+                </Grid.RowDefinitions>
+
+
+                <!-- ════════════════════════════════════════
+                     ROW 0 — TEXT INPUT SECTION
+                     Shows the sentence being built
+                ════════════════════════════════════════ -->
+                <Border Grid.Row="0"
+                        Background="#1A1A32"
+                        CornerRadius="14"
+                        Padding="20,16"
+                        Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Label -->
+                        <TextBlock Grid.Column="0"
+                                   Text="Sentence:"
+                                   Foreground="#9090B0"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,12,0"/>
+
+                        <!-- Text display box -->
+                        <Border Grid.Column="1"
+                                Background="#252540"
+                                CornerRadius="8"
+                                Padding="12,10">
+                            <TextBlock x:Name="lblSentence"
+                                       Text="HELLO"
+                                       Foreground="White"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       FontFamily="Segoe UI"
+                                       TextWrapping="Wrap"
+                                       LineHeight="24"
+                                       MinHeight="40"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+
+                <!-- ════════════════════════════════════════
+                     ROW 1 — CAMERA FEED + RECOGNITION
+                     Main interactive area
+                ════════════════════════════════════════ -->
+                <Border Grid.Row="1"
+                        Background="#1A1A32"
+                        CornerRadius="14"
+                        Margin="0,0,0,12"
+                        Padding="16">
+                    <Grid>
+                        <!-- Camera feed background -->
+                        <Border x:Name="rectCameraFeed"
+                                Background="#252540"
+                                CornerRadius="10"/>
+
+                        <!-- Camera placeholder text -->
+                        <TextBlock Text="[ Camera Feed ]"
+                                   Foreground="#44445A" FontSize="18" FontStyle="Italic"
+                                   HorizontalAlignment="Center" VerticalAlignment="Top"
+                                   Margin="0,20,0,0"
+                                   IsHitTestVisible="False"/>
+
+                        <!-- Guidance overlay -->
+                        <Border HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Background="Transparent"
+                                BorderBrush="#D97B20"
+                                BorderThickness="2"
+                                CornerRadius="10"
+                                Width="240"
+                                Height="200"
+                                Opacity="0.7">
+                            <TextBlock Text="POSITION HAND HERE"
+                                       Foreground="#D97B20"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       TextAlignment="Center"/>
+                        </Border>
+
+                        <!-- Recognition result panel -->
+                        <Border HorizontalAlignment="Center"
+                                VerticalAlignment="Bottom"
+                                Background="#1C1C38"
+                                CornerRadius="10"
+                                Padding="16,12"
+                                Margin="0,0,0,16">
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <!-- Confidence indicator dot -->
+                                <Ellipse x:Name="dotConfidence"
+                                         Width="12"
+                                         Height="12"
+                                         Fill="#D97B20"
+                                         Margin="0,0,12,0"
+                                         VerticalAlignment="Center"/>
+
+                                <!-- Detected letter -->
+                                <TextBlock x:Name="lblDetectedLetter"
+                                           Text="W"
+                                           Foreground="White"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Margin="0,0,16,0"/>
+
+                                <!-- Confidence percentage -->
+                                <TextBlock x:Name="lblConfidence"
+                                           Text="98% Match"
+                                           Foreground="#9090B0"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+
+                <!-- ════════════════════════════════════════
+                     ROW 2 — LETTER TILES
+                     Shows letters in the current word
+                ════════════════════════════════════════ -->
+                <Border Grid.Row="2"
+                        Background="#1A1A32"
+                        CornerRadius="14"
+                        Padding="12,10">
+                    <StackPanel>
+                        <!-- Section title -->
+                        <TextBlock Text="Current Word"
+                                   Foreground="#9090B0"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,8"/>
+
+                        <!-- Letter tiles container (horizontal scroll) -->
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
+                            <StackPanel x:Name="pnlLetterTiles"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+
+                                <!-- Example tiles: H, E, L, L, O, [empty], [empty] -->
+
+                                <!-- H (Active) -->
+                                <Button Style="{StaticResource LetterTile_Active}">
+                                    <TextBlock Text="H" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+
+                                <!-- E (Active) -->
+                                <Button Style="{StaticResource LetterTile_Active}">
+                                    <TextBlock Text="E" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+
+                                <!-- L (Active) -->
+                                <Button Style="{StaticResource LetterTile_Active}">
+                                    <TextBlock Text="L" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+
+                                <!-- L (Active) -->
+                                <Button Style="{StaticResource LetterTile_Active}">
+                                    <TextBlock Text="L" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+
+                                <!-- O (Active) -->
+                                <Button Style="{StaticResource LetterTile_Active}">
+                                    <TextBlock Text="O" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+
+                                <!-- Empty placeholder 1 -->
+                                <Button Style="{StaticResource LetterTile_Empty}"/>
+
+                                <!-- Empty placeholder 2 -->
+                                <Button Style="{StaticResource LetterTile_Empty}"/>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+
+            </Grid>
+
+        </Grid>
+
+    </Grid>
+</Page>
