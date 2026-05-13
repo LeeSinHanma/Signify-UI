@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -21,6 +22,9 @@ namespace SignifyUI
 
         [JsonPropertyName("raw_label")]
         public string? RawLabel { get; set; }
+
+        [JsonPropertyName("prediction_type")]
+        public string PredictionType { get; set; } = string.Empty;
 
         [JsonPropertyName("confidence")]
         public float Confidence { get; set; }
@@ -89,9 +93,9 @@ namespace SignifyUI
 
         public async Task<HandPredictionResponse> PredictFromBytesAsync(
             byte[] imageBytes,
-            float threshold = 0.65f,
-            int smoothWindow = 6,
+            float threshold = 0.70f,
             bool includeLandmarks = false,
+            int? smoothWindow = null,
             CancellationToken cancellationToken = default)
         {
             if (imageBytes is null || imageBytes.Length == 0)
@@ -104,14 +108,19 @@ namespace SignifyUI
             imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
 
             form.Add(imageContent, "file", "frame.jpg");
-            form.Add(new StringContent(threshold.ToString(System.Globalization.CultureInfo.InvariantCulture)), "threshold");
-            form.Add(new StringContent(smoothWindow.ToString(System.Globalization.CultureInfo.InvariantCulture)), "smooth_window");
+            form.Add(new StringContent(threshold.ToString(CultureInfo.InvariantCulture)), "threshold");
             form.Add(new StringContent(includeLandmarks ? "true" : "false"), "include_landmarks");
+
+            if (smoothWindow.HasValue)
+            {
+                form.Add(new StringContent(smoothWindow.Value.ToString(CultureInfo.InvariantCulture)), "smooth_window");
+            }
 
             using HttpResponseMessage response = await _httpClient.PostAsync("predict", form, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             string json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            System.Diagnostics.Debug.WriteLine($"/predict response: {json}");
             HandPredictionResponse? result = JsonSerializer.Deserialize<HandPredictionResponse>(json, JsonOptions);
 
             if (result is null)
@@ -124,9 +133,9 @@ namespace SignifyUI
 
         public async Task<HandPredictionResponse> PredictFromBitmapSourceAsync(
             BitmapSource bitmapSource,
-            float threshold = 0.65f,
-            int smoothWindow = 6,
+            float threshold = 0.70f,
             bool includeLandmarks = false,
+            int? smoothWindow = null,
             int jpegQuality = 80,
             CancellationToken cancellationToken = default)
         {
@@ -136,7 +145,7 @@ namespace SignifyUI
             }
 
             byte[] imageBytes = ConvertBitmapSourceToJpegBytes(bitmapSource, jpegQuality);
-            return await PredictFromBytesAsync(imageBytes, threshold, smoothWindow, includeLandmarks, cancellationToken).ConfigureAwait(false);
+            return await PredictFromBytesAsync(imageBytes, threshold, includeLandmarks, smoothWindow, cancellationToken).ConfigureAwait(false);
         }
 
         public static byte[] ConvertBitmapSourceToJpegBytes(BitmapSource bitmapSource, int jpegQuality = 80)

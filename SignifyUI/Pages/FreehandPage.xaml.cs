@@ -1,12 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using OpenCvSharp;
+using SignifyUI;
 
 // ═══════════════════════════════════════════════════════════════
 //  FreehandPage.xaml.cs  —  Code-Behind  (UI scaffold only)
@@ -21,8 +26,21 @@ namespace Signify.Pages
 {
     public partial class FreehandPage : Page
     {
+        private const string SettingsFilePath = "settings.json";
+        private static readonly TimeSpan PredictionInterval = TimeSpan.FromMilliseconds(250);
+
+        private static readonly SolidColorBrush ConfidenceHighBrush = new((Color)ColorConverter.ConvertFromString("#00C2BB"));
+        private static readonly SolidColorBrush ConfidenceMidBrush = new((Color)ColorConverter.ConvertFromString("#7B61FF"));
+        private static readonly SolidColorBrush ConfidenceLowBrush = new((Color)ColorConverter.ConvertFromString("#F5C518"));
+        private static readonly SolidColorBrush ConfidenceUnknownBrush = new((Color)ColorConverter.ConvertFromString("#9090AA"));
+
         private VideoCapture? _capture;
         private CancellationTokenSource? _cancellationTokenSource;
+
+        private HandPredictionClient? _predictionClient;
+        private DateTime _lastPredictionAtUtc = DateTime.MinValue;
+        private int _predictionInFlight;
+        private float _threshold = 0.60f;
 
         public FreehandPage()
         {
@@ -81,6 +99,8 @@ namespace Signify.Pages
 
                     private void FreehandPage_Loaded(object sender, RoutedEventArgs e)
                     {
+                        _threshold = LoadThresholdFromSettingsFileOrDefault();
+                        ResetPredictionUi();
                         StartCamera();
                     }
 
@@ -91,9 +111,29 @@ namespace Signify.Pages
 
                     private void StartCamera()
                     {
+                        if (_capture != null)
+                        {
+                            return;
+                        }
+
+                        _predictionClient ??= new HandPredictionClient();
+
                         _capture = new VideoCapture(0); // 0 is default camera index
                         _capture.Set(VideoCaptureProperties.FrameWidth, 640);
                         _capture.Set(VideoCaptureProperties.FrameHeight, 480);
+
+                        if (!_capture.IsOpened())
+                        {
+                            Dispatcher.Invoke(() =>
+                            {
+                                txtCameraPlaceholder.Text = "[ Unable to open camera ]";
+                                txtCameraPlaceholder.Visibility = Visibility.Visible;
+                            });
+
+                            _capture.Dispose();
+                            _capture = null;
+                            return;
+                        }
 
                         _cancellationTokenSource = new CancellationTokenSource();
                         var token = _cancellationTokenSource.Token;
@@ -108,35 +148,286 @@ namespace Signify.Pages
                         _capture?.Release();
                         _capture?.Dispose();
                         _capture = null;
+
+                        _predictionClient?.Dispose();
+                        _predictionClient = null;
                     }
 
-                    private void CaptureLoop(CancellationToken token)
+        private void CaptureLoop(CancellationToken token)
+        {
+            using var frame = new Mat();
+
+            while (!token.IsCancellationRequested && _capture != null && _capture.IsOpened())
+            {
+                if (_capture.Read(frame) && !frame.Empty())
+                {
+                    Cv2.ImEncode(".jpg", frame, out byte[] imageBytes);
+
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
-                        using var frame = new Mat();
-                        while (!token.IsCancellationRequested && _capture != null && _capture.IsOpened())
+                        if (token.IsCancellationRequested)
                         {
-                            if (_capture.Read(frame) && !frame.Empty())
-                            {
-                                // Encode frame as JPG to display in WPF
-                                Cv2.ImEncode(".jpg", frame, out byte[] imageBytes);
-
-                                Application.Current.Dispatcher.Invoke(() =>
-                                {
-                                    if (token.IsCancellationRequested) return;
-
-                                    var bitmapImage = new BitmapImage();
-                                    bitmapImage.BeginInit();
-                                    bitmapImage.StreamSource = new MemoryStream(imageBytes);
-                                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                                    bitmapImage.EndInit();
-                                    imgCameraFeed.Source = bitmapImage;
-                                    txtCameraPlaceholder.Visibility = Visibility.Collapsed;
-                                }, DispatcherPriority.Render);
-                            }
-
-                            // Cap frame rate to ~30 FPS
-                            Thread.Sleep(33);
+                            return;
                         }
-                    }
+
+                        var bitmapImage = new BitmapImage();
+                        bitmapImage.BeginInit();
+                        bitmapImage.StreamSource = new MemoryStream(imageBytes);
+                        bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmapImage.EndInit();
+                        bitmapImage.Freeze();
+
+                        imgCameraFeed.Source = bitmapImage;
+                        txtCameraPlaceholder.Visibility = Visibility.Collapsed;
+                    }, DispatcherPriority.Render);
+
+                    MaybeStartPrediction(imageBytes, token);
                 }
+
+                Thread.Sleep(33);
             }
+        }
+
+        private void MaybeStartPrediction(byte[] jpegBytes, CancellationToken token)
+        {
+            if (_predictionClient == null)
+            {
+                return;
+            }
+
+            var nowUtc = DateTime.UtcNow;
+            if (nowUtc - _lastPredictionAtUtc < PredictionInterval)
+            {
+                return;
+            }
+
+            if (Interlocked.CompareExchange(ref _predictionInFlight, 1, 0) != 0)
+            {
+                return;
+            }
+
+            _lastPredictionAtUtc = nowUtc;
+            var bytesForPrediction = jpegBytes;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var prediction = await _predictionClient.PredictFromBytesAsync(
+                        bytesForPrediction,
+                        threshold: _threshold,
+                        includeLandmarks: false,
+                        smoothWindow: null,
+                        cancellationToken: token);
+
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        UpdatePredictionUi(prediction);
+                    });
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                catch
+                {
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        lblPredictedLetter.Text = "-";
+                        lblConfidence.Text = "CONFIDENCE: --";
+                        dotConfidence.Fill = ConfidenceUnknownBrush;
+                        lblConfidence.Foreground = ConfidenceUnknownBrush;
+                    });
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref _predictionInFlight, 0);
+                }
+            }, token);
+        }
+
+        private void UpdatePredictionUi(HandPredictionResponse prediction)
+        {
+            if (!prediction.HandDetected)
+            {
+                lblPredictedLetter.Text = "-";
+                lblConfidence.Text = "CONFIDENCE: --";
+                dotConfidence.Fill = ConfidenceUnknownBrush;
+                lblConfidence.Foreground = ConfidenceUnknownBrush;
+                HideSuggestedLetters();
+                return;
+            }
+
+            var (bestLabel, bestProbability) = GetTopProbability(prediction.Probabilities);
+
+            string displayedLabel = NormalizeDisplayedLabel(prediction.Label, bestLabel);
+
+            // Prefer probabilities for the displayed confidence when available.
+            // Many backends compute a "confidence" field differently (or as 0/1),
+            // while probabilities reflect the actual distribution.
+            float displayedConfidence = bestProbability > 0f ? bestProbability : NormalizeDisplayedConfidence(prediction.Confidence, 0f);
+
+            lblPredictedLetter.Text = displayedLabel;
+
+            var confidencePercent = displayedConfidence * 100f;
+            lblConfidence.Text = $"CONFIDENCE: {confidencePercent:0.0}%";
+
+            var brush = GetConfidenceBrush(displayedConfidence);
+            dotConfidence.Fill = brush;
+            lblConfidence.Foreground = brush;
+
+            UpdateSuggestedLetters(prediction.Probabilities);
+        }
+
+        private void ResetPredictionUi()
+        {
+            lblPredictedLetter.Text = "-";
+            lblConfidence.Text = "CONFIDENCE: --";
+            dotConfidence.Fill = ConfidenceUnknownBrush;
+            lblConfidence.Foreground = ConfidenceUnknownBrush;
+            HideSuggestedLetters();
+        }
+
+        private void UpdateSuggestedLetters(Dictionary<string, float>? probabilities)
+        {
+            if (probabilities == null || probabilities.Count == 0)
+            {
+                HideSuggestedLetters();
+                return;
+            }
+
+            var top = probabilities
+                .OrderByDescending(kv => kv.Value)
+                .Take(4)
+                .ToArray();
+
+            UpdateSuggestedButton(btnSuggestA, top, 0);
+            UpdateSuggestedButton(btnSuggestE, top, 1);
+            UpdateSuggestedButton(btnSuggestI, top, 2);
+            UpdateSuggestedButton(btnSuggestO, top, 3);
+        }
+
+        private void HideSuggestedLetters()
+        {
+            btnSuggestA.Visibility = Visibility.Collapsed;
+            btnSuggestE.Visibility = Visibility.Collapsed;
+            btnSuggestI.Visibility = Visibility.Collapsed;
+            btnSuggestO.Visibility = Visibility.Collapsed;
+        }
+
+        private static (string Label, float Probability) GetTopProbability(Dictionary<string, float>? probabilities)
+        {
+            if (probabilities == null || probabilities.Count == 0)
+            {
+                return ("-", 0f);
+            }
+
+            var best = probabilities.OrderByDescending(kv => kv.Value).First();
+            var label = string.IsNullOrWhiteSpace(best.Key) ? "-" : best.Key.Trim();
+            return (label, best.Value);
+        }
+
+        private static string NormalizeDisplayedLabel(string labelFromApi, string fallbackLabel)
+        {
+            var label = (labelFromApi ?? string.Empty).Trim();
+
+            // Expect single-letter labels (A-Z). If backend returns multiple letters
+            // (e.g., "ALYZ"), show the top-1 probability label instead.
+            if (label.Length == 1 && char.IsLetter(label[0]))
+            {
+                return label.ToUpperInvariant();
+            }
+
+            if (!string.IsNullOrWhiteSpace(fallbackLabel) && fallbackLabel != "-")
+            {
+                return fallbackLabel.Length == 1 ? fallbackLabel.ToUpperInvariant() : fallbackLabel;
+            }
+
+            return "-";
+        }
+
+        private static float NormalizeDisplayedConfidence(float confidenceFromApi, float fallbackProbability)
+        {
+            float confidence = confidenceFromApi;
+
+            // Some backends omit confidence or send 0 while still providing probabilities.
+            if (confidence <= 0f)
+            {
+                confidence = fallbackProbability;
+            }
+
+            // If a backend returns percent (0-100), normalize to 0-1.
+            if (confidence > 1f && confidence <= 100f)
+            {
+                confidence /= 100f;
+            }
+
+            return Math.Clamp(confidence, 0f, 1f);
+        }
+
+        private static void UpdateSuggestedButton(Button button, KeyValuePair<string, float>[] items, int index)
+        {
+            if (index >= items.Length)
+            {
+                button.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            button.Visibility = Visibility.Visible;
+            button.Content = items[index].Key;
+            button.ToolTip = $"{items[index].Key}: {(items[index].Value * 100f):0.0}%";
+        }
+
+        private static SolidColorBrush GetConfidenceBrush(float confidence)
+        {
+            if (confidence <= 0f)
+            {
+                return ConfidenceUnknownBrush;
+            }
+
+            if (confidence >= 0.85f)
+            {
+                return ConfidenceHighBrush;
+            }
+
+            if (confidence >= 0.65f)
+            {
+                return ConfidenceMidBrush;
+            }
+
+            return ConfidenceLowBrush;
+        }
+
+        private static float LoadThresholdFromSettingsFileOrDefault(float defaultThreshold = 0.60f)
+        {
+            try
+            {
+                if (!File.Exists(SettingsFilePath))
+                {
+                    return defaultThreshold;
+                }
+
+                string json = File.ReadAllText(SettingsFilePath);
+                using var doc = JsonDocument.Parse(json);
+
+                if (!doc.RootElement.TryGetProperty("ConfidenceThreshold", out var thresholdElement))
+                {
+                    return defaultThreshold;
+                }
+
+                double thresholdPercent = thresholdElement.ValueKind switch
+                {
+                    JsonValueKind.Number => thresholdElement.GetDouble(),
+                    JsonValueKind.String when double.TryParse(thresholdElement.GetString(), out var parsed) => parsed,
+                    _ => defaultThreshold * 100d
+                };
+
+                thresholdPercent = Math.Clamp(thresholdPercent, 0d, 100d);
+                return (float)(thresholdPercent / 100d);
+            }
+            catch
+            {
+                return defaultThreshold;
+            }
+        }
+    }
+}
