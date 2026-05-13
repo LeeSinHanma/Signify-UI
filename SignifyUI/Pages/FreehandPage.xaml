@@ -81,12 +81,10 @@
     <Grid>
 
         <!-- ──────────────────────────────────────────────────────
-             LAYER 0 — CAMERA FEED PLACEHOLDER
-             Replace this Rectangle + TextBlock with your actual
-             camera Image/WritableBitmap control when backend is ready.
+             LAYER 0 — CAMERA FEED
         ────────────────────────────────────────────────────────── -->
-        <Rectangle x:Name="rectCameraFeed" Fill="#252535"/>
-        <TextBlock Text="[ Camera Feed ]"
+        <Image x:Name="imgCameraFeed" Stretch="UniformToFill"/>
+        <TextBlock x:Name="txtCameraPlaceholder" Text="[ Camera Feed ]"
                    Foreground="#44445A" FontSize="22" FontStyle="Italic"
                    HorizontalAlignment="Center" VerticalAlignment="Center"
                    IsHitTestVisible="False"/>
