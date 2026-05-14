@@ -1,0 +1,423 @@
+<UserControl x:Class="SignifyUI.AuthenticationModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="420"
+             Height="540"
+             Background="Transparent">
+
+    <UserControl.Resources>
+
+        <!-- ══════════════════════════════════════════
+             INPUT TEXTBOX STYLE
+             Dark background, light text, purple border on focus
+        ══════════════════════════════════════════ -->
+        <Style x:Key="AuthInputTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#1C1C38"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#333350"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+            <Setter Property="CaretBrush" Value="#7B61FF"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="AllowDrop" Value="true"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Focusable="false"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"
+                                          Padding="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#7B61FF"/>
+                                <Setter TargetName="border" Property="Background" Value="#252540"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="false">
+                                <Setter Property="Opacity" Value="0.56"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ══════════════════════════════════════════
+             PASSWORDBOX STYLE — mimics TextBox style
+        ══════════════════════════════════════════ -->
+        <Style x:Key="AuthPasswordBox" TargetType="PasswordBox">
+            <Setter Property="Background" Value="#1C1C38"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#333350"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+            <Setter Property="CaretBrush" Value="#7B61FF"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Focusable="false"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"
+                                          Padding="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#7B61FF"/>
+                                <Setter TargetName="border" Property="Background" Value="#252540"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="false">
+                                <Setter Property="Opacity" Value="0.56"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ══════════════════════════════════════════
+             PRIMARY ACTION BUTTON
+             Purple background, white text, hover effect
+        ══════════════════════════════════════════ -->
+        <Style x:Key="AuthPrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#7B61FF"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="0,16,0,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#9280FF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ══════════════════════════════════════════
+             TAB BUTTON — for Login/Register tabs
+        ══════════════════════════════════════════ -->
+        <Style x:Key="AuthTabButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8888AA"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#9090B0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </UserControl.Resources>
+
+    <!-- ══════════════════════════════════════════
+         MODAL CARD CONTAINER
+         Centered white box with rounded corners on dark background
+    ══════════════════════════════════════════ -->
+    <Border Background="#161630"
+            CornerRadius="16"
+            Padding="40">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" Opacity="0.5"
+                              BlurRadius="20" ShadowDepth="4"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <!-- Header with close button -->
+                <RowDefinition Height="Auto"/>
+                <!-- Tab bar -->
+                <RowDefinition Height="*"/>
+                <!-- Content area -->
+            </Grid.RowDefinitions>
+
+            <!-- ══════════════════════════════════════════
+                 HEADER — Close button top right
+            ══════════════════════════════════════════ -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Title -->
+                <TextBlock Grid.Column="0"
+                           x:Name="lblModalTitle"
+                           Text="Login to Signify"
+                           Foreground="White"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           FontFamily="Segoe UI"
+                           VerticalAlignment="Center"/>
+
+                <!-- Close button (X) -->
+                <Button Grid.Column="1"
+                        x:Name="btnClose"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Foreground="#8888AA"
+                        FontSize="20"
+                        Padding="0"
+                        Width="24"
+                        Height="24"
+                        Content="✕"
+                        Cursor="Hand"
+                        FontFamily="Segoe UI"/>
+            </Grid>
+
+            <!-- ══════════════════════════════════════════
+                 TAB BAR — Login and Register tabs
+            ══════════════════════════════════════════ -->
+            <Border x:Name="borderAuthTabs"
+                    Grid.Row="1"
+                    BorderBrush="#333350"
+                    BorderThickness="0,0,0,1"
+                    Padding="0,0,0,16"
+                    Margin="0,0,0,20">
+                <StackPanel Orientation="Horizontal">
+                    <!-- Login Tab -->
+                    <StackPanel Orientation="Vertical"
+                                Margin="0,0,32,0">
+                        <Button x:Name="btnTabLogin"
+                                Style="{StaticResource AuthTabButton}"
+                                Content="Login"
+                                Foreground="White"
+                                Tag="login"/>
+                        <!-- Active indicator line -->
+                        <Rectangle x:Name="rectLoginIndicator"
+                                   Height="2"
+                                   Fill="#7B61FF"
+                                   RadiusX="1" RadiusY="1"
+                                   Margin="0,6,0,0"/>
+                    </StackPanel>
+
+                    <!-- Register Tab -->
+                    <StackPanel Orientation="Vertical">
+                        <Button x:Name="btnTabRegister"
+                                Style="{StaticResource AuthTabButton}"
+                                Content="Register"
+                                Tag="register"/>
+                        <!-- Inactive indicator (hidden) -->
+                        <Rectangle x:Name="rectRegisterIndicator"
+                                   Height="2"
+                                   Fill="Transparent"
+                                   RadiusX="1" RadiusY="1"
+                                   Margin="0,6,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ══════════════════════════════════════════
+                 CONTENT AREA — Login/Register forms
+            ══════════════════════════════════════════ -->
+            <StackPanel Grid.Row="2"
+                        x:Name="contentPanel"
+                        Margin="0,0,0,0">
+
+                <StackPanel x:Name="guestFormsPanel">
+
+                <!-- ── LOGIN FORM ── -->
+                <StackPanel x:Name="loginForm"
+                            Visibility="Visible">
+                    <!-- Username field -->
+                    <TextBlock Text="Username"
+                               Foreground="#8888AA"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               FontFamily="Segoe UI"
+                               Margin="0,0,0,4"/>
+                    <TextBox x:Name="txtLoginUsername"
+                             Style="{StaticResource AuthInputTextBox}"
+                             Text=""
+                             Foreground="White"/>
+
+                    <!-- Password field -->
+                    <TextBlock Text="Password"
+                               Foreground="#8888AA"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               FontFamily="Segoe UI"
+                               Margin="0,12,0,4"/>
+                    <PasswordBox x:Name="pwdLoginPassword"
+                                 Style="{StaticResource AuthPasswordBox}"/>
+
+                    <!-- "Forgot password?" link -->
+                    <Button Content="Forgot password?"
+                            Background="Transparent"
+                            Foreground="#7B61FF"
+                            BorderThickness="0"
+                            FontSize="11"
+                            FontFamily="Segoe UI"
+                            Padding="0"
+                            Margin="0,8,0,0"
+                            Cursor="Hand"
+                            HorizontalAlignment="Right"/>
+
+                    <!-- Login button -->
+                    <Button x:Name="btnLogin"
+                            Style="{StaticResource AuthPrimaryButton}"
+                            Content="Sign In"
+                            Click="btnLogin_Click"/>
+
+                    <!-- Sign up link -->
+                    <TextBlock HorizontalAlignment="Center"
+                               Margin="0,12,0,0"
+                               Foreground="#8888AA"
+                               FontSize="12"
+                               FontFamily="Segoe UI">
+                        <Run Text="Don't have an account? "/>
+                        <Hyperlink Foreground="#7B61FF"
+                                   x:Name="linkSignUp">
+                            Sign up
+                        </Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- ── REGISTER FORM (hidden by default) ── -->
+                <StackPanel x:Name="registerForm"
+                            Visibility="Collapsed">
+                    <!-- Username field -->
+                    <TextBlock Text="Username"
+                               Foreground="#8888AA"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               FontFamily="Segoe UI"
+                               Margin="0,0,0,4"/>
+                    <TextBox x:Name="txtRegisterUsername"
+                             Style="{StaticResource AuthInputTextBox}"
+                             Text=""
+                             Foreground="White"/>
+
+                    <!-- Password field -->
+                    <TextBlock Text="Password"
+                               Foreground="#8888AA"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               FontFamily="Segoe UI"
+                               Margin="0,12,0,4"/>
+                    <PasswordBox x:Name="pwdRegisterPassword"
+                                 Style="{StaticResource AuthPasswordBox}"/>
+
+                    <!-- Confirm password field -->
+                    <TextBlock Text="Confirm Password"
+                               Foreground="#8888AA"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               FontFamily="Segoe UI"
+                               Margin="0,12,0,4"/>
+                    <PasswordBox x:Name="pwdRegisterConfirm"
+                                 Style="{StaticResource AuthPasswordBox}"/>
+
+                    <!-- Register button -->
+                    <Button x:Name="btnRegister"
+                            Style="{StaticResource AuthPrimaryButton}"
+                            Content="Create Account"
+                            Click="btnRegister_Click"/>
+
+                    <!-- Login link -->
+                    <TextBlock HorizontalAlignment="Center"
+                               Margin="0,12,0,0"
+                               Foreground="#8888AA"
+                               FontSize="12"
+                               FontFamily="Segoe UI">
+                        <Run Text="Already have an account? "/>
+                        <Hyperlink Foreground="#7B61FF"
+                                   x:Name="linkLogin">
+                            Sign in
+                        </Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+
+                </StackPanel>
+
+                <!-- ── SIGNED-IN ACCOUNT ── -->
+                <StackPanel x:Name="accountPanel"
+                            Visibility="Collapsed"
+                            Margin="0,8,0,0">
+                    <TextBlock Text="Signed in as"
+                               Foreground="#8888AA"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               FontFamily="Segoe UI"
+                               Margin="0,0,0,6"/>
+                    <TextBlock x:Name="lblAccountUsername"
+                               Text=""
+                               Foreground="White"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               FontFamily="Segoe UI"
+                               TextWrapping="Wrap"/>
+                    <TextBlock Text="Your Learn mode progress is saved to this account."
+                               Foreground="#666688"
+                               FontSize="11"
+                               FontFamily="Segoe UI"
+                               Margin="0,12,0,0"
+                               TextWrapping="Wrap"/>
+                    <Button x:Name="btnLogout"
+                            Style="{StaticResource AuthPrimaryButton}"
+                            Content="Log out"
+                            Margin="0,24,0,0"
+                            Click="btnLogout_Click"/>
+                </StackPanel>
+
+            </StackPanel>
+
+        </Grid>
+    </Border>
+
+</UserControl>

@@ -535,9 +535,14 @@
                         ClipToBounds="True">
                     <Grid>
 
-                        <!-- Camera feed placeholder — swap with WritableBitmap -->
+                        <!-- Camera feed: dark backing + live Image + placeholder text -->
                         <Rectangle x:Name="rectCameraFeed" Fill="#0A1218"/>
-                        <TextBlock Text="[ Live Camera ]"
+                        <Image x:Name="imgCameraFeed"
+                               Stretch="UniformToFill"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Stretch"/>
+                        <TextBlock x:Name="txtCameraPlaceholder"
+                                   Text="[ Live Camera ]"
                                    Foreground="#1A3A30" FontSize="16"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
@@ -590,7 +595,7 @@
                                                FontFamily="Segoe UI"
                                                Margin="0,0,0,4"/>
                                     <TextBlock x:Name="lblMatchPct"
-                                               Text="Matching: 89%"
+                                               Text="Confidence: —"
                                                Foreground="White"
                                                FontSize="20" FontWeight="Bold"
                                                FontFamily="Segoe UI"/>
@@ -735,13 +740,19 @@
                             </Border>
                         </Grid>
 
-                        <!-- ASL subtitle label -->
-                        <TextBlock Grid.Row="1"
-                                   Text="AMERICAN SIGN LANGUAGE"
-                                   Foreground="#555577"
-                                   FontSize="10" FontWeight="Bold"
-                                   FontFamily="Segoe UI"
-                                   Margin="0,0,0,14"/>
+                        <!-- ASL subtitle + per-letter progress -->
+                        <StackPanel Grid.Row="1" Margin="0,0,0,14">
+                            <TextBlock Text="AMERICAN SIGN LANGUAGE"
+                                       Foreground="#555577"
+                                       FontSize="10" FontWeight="Bold"
+                                       FontFamily="Segoe UI"
+                                       Margin="0,0,0,6"/>
+                            <TextBlock x:Name="lblLetterProgressDetail"
+                                       Text="Progress: 0 / 10 (not started)"
+                                       Foreground="#8888AA"
+                                       FontSize="11"
+                                       FontFamily="Segoe UI"/>
+                        </StackPanel>
 
                         <!-- Hand sign reference image -->
                         <Border Grid.Row="2"
