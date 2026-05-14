@@ -90,7 +90,9 @@
                     <ColumnDefinition Width="Auto"/>
                     <!-- Col 2: nav tabs -->
                     <ColumnDefinition Width="Auto"/>
-                    <!-- Col 3: icon buttons -->
+                    <!-- Col 3: user display -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Col 4: icon buttons -->
                 </Grid.ColumnDefinitions>
 
                 <!-- App name "Signify" — purple, bold -->
@@ -130,8 +132,18 @@
                             Content="Academy"/>
                 </StackPanel>
 
+                <!-- User display: username when logged in -->
+                <TextBlock x:Name="txtUserDisplay"
+                           Grid.Column="3"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="#8888AA"
+                           FontSize="12"
+                           Margin="20,0"
+                           Text=""/>
+
                 <!-- Settings and Profile icon buttons -->
-                <StackPanel Grid.Column="3"
+                <StackPanel Grid.Column="4"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
                             Margin="0,0,0,0">

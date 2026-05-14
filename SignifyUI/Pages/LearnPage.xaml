@@ -135,11 +135,13 @@
                     <ColumnDefinition Width="Auto"/>
                     <!-- Logo text     -->
                     <ColumnDefinition Width="Auto"/>
-                    <!-- Nav tabs      -->
-                    <ColumnDefinition Width="*"/>
-                    <!-- Spacer        -->
+                    <!-- Divider       -->
                     <ColumnDefinition Width="Auto"/>
-                    <!-- Help/Settings -->
+                    <!-- Mode label    -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- User label (flex; ends before icons) -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Help/Settings icons -->
                 </Grid.ColumnDefinitions>
 
                 <!-- ── BACK BUTTON ── -->
@@ -178,8 +180,20 @@
                            FontFamily="Segoe UI"
                            VerticalAlignment="Center"/>
 
+                <!-- USER DISPLAY -->
+                <TextBlock x:Name="txtUserDisplay"
+                           Grid.Column="4"
+                           HorizontalAlignment="Right"
+                           Foreground="#8888AA"
+                           FontSize="11"
+                           FontFamily="Segoe UI"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0"
+                           Text=""
+                           TextTrimming="CharacterEllipsis"/>
+
                 <!-- ── HEADER ICON BUTTONS ── -->
-                <StackPanel Grid.Column="4"
+                <StackPanel Grid.Column="5"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <Button x:Name="btnHelp"

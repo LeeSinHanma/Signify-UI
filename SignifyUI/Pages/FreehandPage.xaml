@@ -168,6 +168,17 @@
                    FontFamily="Segoe UI"
                    VerticalAlignment="Center"/>
 
+                    <!-- USER DISPLAY -->
+                    <TextBlock x:Name="txtUserDisplay"
+                   Grid.Column="4"
+                   HorizontalAlignment="Right"
+                   Foreground="#8888AA"
+                   FontSize="11"
+                   FontFamily="Segoe UI"
+                   VerticalAlignment="Center"
+                   Margin="0,0,16,0"
+                   Text=""/>
+
                     <!-- RIGHT ACTIONS -->
                     <StackPanel Grid.Column="5"
                     Orientation="Horizontal"

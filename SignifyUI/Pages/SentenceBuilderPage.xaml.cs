@@ -56,12 +56,30 @@ namespace Signify.Pages
         {
             _threshold = LoadThresholdFromSettingsFileOrDefault();
             ResetPredictionUi();
+            RefreshUserDisplay();
+            SignifyUI.Services.AuthService.SessionChanged -= AuthService_SessionChanged;
+            SignifyUI.Services.AuthService.SessionChanged += AuthService_SessionChanged;
             StartCamera();
         }
 
         private void SentenceBuilderPage_Unloaded(object sender, RoutedEventArgs e)
         {
+            SignifyUI.Services.AuthService.SessionChanged -= AuthService_SessionChanged;
             StopCamera();
+        }
+
+        private void AuthService_SessionChanged(object? sender, EventArgs e) => RefreshUserDisplay();
+
+        private void RefreshUserDisplay()
+        {
+            if (SignifyUI.Services.AuthService.IsLoggedIn && !string.IsNullOrWhiteSpace(SignifyUI.Services.AuthService.CurrentUsername))
+            {
+                txtUserDisplay.Text = $"User: {SignifyUI.Services.AuthService.CurrentUsername}";
+            }
+            else
+            {
+                txtUserDisplay.Text = "";
+            }
         }
 
         // ── Navigation ───────────────────────────────────────────────
