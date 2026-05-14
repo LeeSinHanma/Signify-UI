@@ -105,6 +105,7 @@ namespace SignifyUI
                     continue;
                 }
 
+                Cv2.Flip(frame, frame, FlipMode.Y);
                 var imageSource = ToBitmapSource(frame);
 
                 await Dispatcher.InvokeAsync(() =>

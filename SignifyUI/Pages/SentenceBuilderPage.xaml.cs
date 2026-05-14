@@ -120,6 +120,7 @@ namespace Signify.Pages
             {
                 if (_capture.Read(frame) && !frame.Empty())
                 {
+                    Cv2.Flip(frame, frame, FlipMode.Y);
                     Cv2.ImEncode(".jpg", frame, out byte[] imageBytes);
 
                     Application.Current.Dispatcher.Invoke(() =>
