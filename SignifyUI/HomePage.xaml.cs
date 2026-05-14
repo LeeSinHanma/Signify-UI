@@ -101,28 +101,51 @@ namespace SignifyUI
 
         // ── CARD NAVIGATION ───────────────────────────────────────
 
+        // Helper to check authentication
+        private bool EnsureAuthenticated()
+        {
+            if (!AuthService.IsLoggedIn)
+            {
+                ShowAuthenticationModal();
+                return false;
+            }
+            return true;
+        }
+
         // Freehand Mode — navigates to FreehandPage
         private void btnCardFreehand_Click(object sender, RoutedEventArgs e)
         {
-            NavigationService.Navigate(new FreehandPage());
+            if (EnsureAuthenticated())
+            {
+                NavigationService.Navigate(new FreehandPage());
+            }
         }
 
         // Learn Mode — navigates to LearnPage
         private void btnCardLearn_Click(object sender, RoutedEventArgs e)
         {
-            NavigationService.Navigate(new LearnPage());
+            if (EnsureAuthenticated())
+            {
+                NavigationService.Navigate(new LearnPage());
+            }
         }
 
         // Sentence Builder — navigates to SentenceBuilderPage
         private void btnCardSentenceBuilder_Click(object sender, RoutedEventArgs e)
         {
-            NavigationService.Navigate(new SentenceBuilderPage());
+            if (EnsureAuthenticated())
+            {
+                NavigationService.Navigate(new SentenceBuilderPage());
+            }
         }
 
         // Settings — navigates to SettingsPage
         private void btnCardSettings_Click(object sender, RoutedEventArgs e)
         {
-            NavigationService.Navigate(new SettingsPage());
+            if (EnsureAuthenticated())
+            {
+                NavigationService.Navigate(new SettingsPage());
+            }
         }
 
         // ── AUTHENTICATION MODAL ──────────────────────────────────

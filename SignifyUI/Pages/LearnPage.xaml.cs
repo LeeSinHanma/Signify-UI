@@ -52,12 +52,26 @@ namespace Signify.Pages
         private int _predictionInFlight;
         private float _threshold = 0.60f;
 
+        // Session Mode variables
+        private bool _isLearningSession;
+        private List<char> _sessionLetters = new();
+        private int _sessionCurrentIndex;
+        private bool _isNoGuidePhase;
+        private bool _isAdvancingSession;
+
+        private MediaPlayer _correctSoundPlayer = new MediaPlayer();
+        private MediaPlayer _doneSoundPlayer = new MediaPlayer();
+
         // ────────────────────────────────────────────────────────────────
         public LearnPage()
         {
             InitializeComponent();
             Loaded += LearnPage_Loaded;
             Unloaded += LearnPage_Unloaded;
+
+            // Load audio tracks
+            _correctSoundPlayer.Open(new Uri("Sounds/correct.mp3", UriKind.Relative));
+            _doneSoundPlayer.Open(new Uri("Sounds/done.mp3", UriKind.Relative));
         }
 
         private void AuthService_SessionChanged(object? sender, EventArgs e)
@@ -169,8 +183,8 @@ namespace Signify.Pages
             ResetAiRecognitionPanel();
 
             // ── Hand-sign image — set Source per letter ──────────────────
-            // imgHandSign.Source = new BitmapImage(
-            //     new Uri($"pack://application:,,,/Assets/Signs/{letter}.png"));
+            imgHandSign.Source = new System.Windows.Media.Imaging.BitmapImage(
+                new Uri($"pack://application:,,,/HandImages/{letter}.png"));
 
             // ── Prev / Next button dim logic ────────────────────────────
             btnPrevLetter.Opacity = index == 0 ? 0.35 : 1.0;
@@ -268,29 +282,37 @@ namespace Signify.Pages
 
             while (!token.IsCancellationRequested && _capture != null && _capture.IsOpened())
             {
-                if (_capture.Read(frame) && !frame.Empty())
+                try
                 {
-                    Cv2.ImEncode(".jpg", frame, out byte[] imageBytes);
-
-                    Application.Current.Dispatcher.Invoke(() =>
+                    if (_capture != null && _capture.Read(frame) && !frame.Empty())
                     {
-                        if (token.IsCancellationRequested)
+                        Cv2.ImEncode(".jpg", frame, out byte[] imageBytes);
+
+                        Application.Current.Dispatcher.Invoke(() =>
                         {
-                            return;
-                        }
+                            if (token.IsCancellationRequested)
+                            {
+                                return;
+                            }
 
-                        var bitmapImage = new BitmapImage();
-                        bitmapImage.BeginInit();
-                        bitmapImage.StreamSource = new MemoryStream(imageBytes);
-                        bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmapImage.EndInit();
-                        bitmapImage.Freeze();
+                            var bitmapImage = new BitmapImage();
+                            bitmapImage.BeginInit();
+                            bitmapImage.StreamSource = new MemoryStream(imageBytes);
+                            bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmapImage.EndInit();
+                            bitmapImage.Freeze();
 
-                        imgCameraFeed.Source = bitmapImage;
-                        txtCameraPlaceholder.Visibility = Visibility.Collapsed;
-                    }, DispatcherPriority.Render);
+                            imgCameraFeed.Source = bitmapImage;
+                            txtCameraPlaceholder.Visibility = Visibility.Collapsed;
+                        }, DispatcherPriority.Render);
 
-                    MaybeStartPrediction(imageBytes, token);
+                        MaybeStartPrediction(imageBytes, token);
+                    }
+                }
+                catch (Exception ex) when (ex is OpenCvSharp.OpenCVException || ex is ObjectDisposedException || ex is NullReferenceException)
+                {
+                    // The camera capture was likely disposed or released by another thread
+                    break;
                 }
 
                 Thread.Sleep(33);
@@ -384,12 +406,185 @@ namespace Signify.Pages
             {
                 lblMatchCheck.Text = "✔";
                 lblMatchCheck.Foreground = new SolidColorBrush(Color.FromRgb(0xA0, 0xFF, 0xA0));
-                MaybeIncrementLetterProgress(_currentIndex, confidence);
+
+                if (_isLearningSession)
+                {
+                    if (confidence >= LetterProgressMinConfidence)
+                        AdvanceSession();
+                }
+                else
+                {
+                    MaybeIncrementLetterProgress(_currentIndex, confidence);
+                }
             }
             else
             {
                 lblMatchCheck.Text = displayed == "-" ? "?" : "✗";
                 lblMatchCheck.Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0x88, 0x88));
+            }
+        }
+
+        private void btnStartLearning_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isLearningSession) 
+            {
+                EndLearningSession(false);
+                return;
+            }
+
+            var random = new System.Random();
+            _sessionLetters = Letters.OrderBy(x => random.Next()).Take(5).ToList();
+            _sessionCurrentIndex = 0;
+            _isNoGuidePhase = false;
+            _isLearningSession = true;
+
+            btnStartLearning.Content = "CANCEL LEARNING";
+            btnStartLearning.Background = new SolidColorBrush(Color.FromRgb(0xDC, 0x35, 0x45)); // Red
+            lblSessionStatus.Visibility = Visibility.Visible;
+            lblSessionInstruction.Visibility = Visibility.Visible;
+            btnSkipLetter.Visibility = Visibility.Visible;
+
+            gridAlphabet.IsEnabled = false;
+            btnPrevLetter.IsEnabled = false;
+            btnNextLetter.IsEnabled = false;
+
+            LoadSessionLetter();
+        }
+
+        private void LoadSessionLetter()
+        {
+            char target = _sessionLetters[_sessionCurrentIndex];
+            int index = Letters.IndexOf(target);
+
+            SelectLetter(index); 
+
+            lblSessionStatus.Text = $"SESSION: {_sessionCurrentIndex + 1} / 5";
+
+            if (_isNoGuidePhase)
+            {
+                lblSessionInstruction.Text = "NO GUIDE: Do it from memory!";
+                brdHandSign.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                lblSessionInstruction.Text = "GUIDED: Follow the image below";
+                brdHandSign.Visibility = Visibility.Visible;
+            }
+        }
+
+        private async void AdvanceSession()
+        {
+            if (_isAdvancingSession) return;
+            _isAdvancingSession = true;
+
+            lblSessionInstruction.Text = "Great job!";
+            lblSessionInstruction.Foreground = new SolidColorBrush(Color.FromRgb(0xA0, 0xFF, 0xA0));
+
+            // Play correct match sound
+            _correctSoundPlayer.Position = TimeSpan.Zero;
+            _correctSoundPlayer.Play();
+
+            await Task.Delay(1500); 
+
+            if (!_isLearningSession) 
+            {
+                _isAdvancingSession = false;
+                return; 
+            }
+
+            lblSessionInstruction.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0xC5, 0x18));
+
+            if (!_isNoGuidePhase)
+            {
+                _isNoGuidePhase = true;
+                LoadSessionLetter();
+            }
+            else
+            {
+                _sessionCurrentIndex++;
+                _isNoGuidePhase = false;
+
+                if (_sessionCurrentIndex >= 5)
+                {
+                    EndLearningSession(completed: true);
+                }
+                else
+                {
+                    LoadSessionLetter();
+                }
+            }
+
+            _isAdvancingSession = false;
+        }
+
+        private void EndLearningSession(bool completed)
+        {
+            _isLearningSession = false;
+            btnStartLearning.Content = "START LEARNING";
+            btnStartLearning.Background = new SolidColorBrush(Color.FromRgb(0x28, 0xA7, 0x45)); // Green
+            lblSessionStatus.Visibility = Visibility.Collapsed;
+            lblSessionInstruction.Visibility = Visibility.Collapsed;
+            btnSkipLetter.Visibility = Visibility.Collapsed;
+            brdHandSign.Visibility = Visibility.Visible; 
+
+            gridAlphabet.IsEnabled = true;
+            btnPrevLetter.IsEnabled = true;
+            btnNextLetter.IsEnabled = true;
+
+            if (completed)
+            {
+                // Play completion sound
+                _doneSoundPlayer.Position = TimeSpan.Zero;
+                _doneSoundPlayer.Play();
+
+                MessageBox.Show("Session complete! +1 Progress for all 5 letters.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                DateTime now = DateTime.UtcNow;
+                foreach(var c in _sessionLetters)
+                {
+                    int idx = Letters.IndexOf(c);
+                    if (idx >= 0 && _letterProgress[idx] < MaxLetterProgress)
+                    {
+                        _letterProgress[idx]++;
+                        _lastLetterProgressIncrementUtc[idx] = now;
+
+                        // Push to backend
+                        var updateRes = AuthService.UpdateProgress(c.ToString(), _letterProgress[idx]);
+                        if (updateRes.success && updateRes.result != null)
+                        {
+                            Dispatcher.Invoke(() => { lblMastery.Text = $"MASTERY Level: {updateRes.result.MasteryLevel}"; });
+                        }
+                    }
+                }
+
+                RefreshLetterProgressUi();
+                UpdateLetterProgressDetailLabel(_currentIndex);
+            }
+        }
+
+        private void btnSkipLetter_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_isLearningSession || _isAdvancingSession) return;
+
+            // Immediately forcefully advance without the "Great Job" pause
+            if (!_isNoGuidePhase)
+            {
+                _isNoGuidePhase = true;
+                LoadSessionLetter();
+            }
+            else
+            {
+                _sessionCurrentIndex++;
+                _isNoGuidePhase = false;
+
+                if (_sessionCurrentIndex >= 5)
+                {
+                    EndLearningSession(completed: true);
+                }
+                else
+                {
+                    LoadSessionLetter();
+                }
             }
         }
 
@@ -418,8 +613,15 @@ namespace Signify.Pages
 
             _letterProgress[letterIndex]++;
             _lastLetterProgressIncrementUtc[letterIndex] = now;
+
+            // Push to backend
+            var updateRes = AuthService.UpdateProgress(Letters[letterIndex].ToString(), _letterProgress[letterIndex]);
+            if (updateRes.success && updateRes.result != null)
+            {
+                Dispatcher.Invoke(() => { lblMastery.Text = $"MASTERY Level: {updateRes.result.MasteryLevel}"; });
+            }
+
             RefreshLetterProgressUi(letterIndex);
-            SaveLetterProgress();
         }
 
         private void EnsureLetterTileProgressLabels()
@@ -477,9 +679,6 @@ namespace Signify.Pages
                 _letterButtons[i].ToolTip = $"Letter {Letters[i]} — progress {p} / {MaxLetterProgress}";
             }
 
-            int mastered = _letterProgress.Count(p => p >= MaxLetterProgress);
-            lblMastery.Text = $"MASTERY: {mastered} / {LetterCount} at level {MaxLetterProgress}";
-
             UpdateLetterProgressDetailLabel(_currentIndex);
         }
 
@@ -503,34 +702,29 @@ namespace Signify.Pages
                 _lastLetterProgressIncrementUtc[i] = DateTime.MinValue;
             }
 
-            string? path = AuthService.GetLearnProgressFilePath();
-            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            var (success, msg, account) = AuthService.GetCurrentAccount();
+            if (!success || account == null)
             {
                 return;
             }
 
             try
             {
-                string json = File.ReadAllText(path);
-                using JsonDocument doc = JsonDocument.Parse(json);
-                if (!doc.RootElement.TryGetProperty("Levels", out JsonElement levels) ||
-                    levels.ValueKind != JsonValueKind.Array)
+                for (int i = 0; i < LetterCount; i++)
                 {
-                    return;
-                }
-
-                int i = 0;
-                foreach (JsonElement el in levels.EnumerateArray())
-                {
-                    if (i >= LetterCount)
+                    string k = Letters[i].ToString();
+                    if (account.Progress.TryGetValue(k, out int level))
                     {
-                        break;
+                        _letterProgress[i] = Math.Clamp(level, 0, MaxLetterProgress);
                     }
-
-                    int v = el.ValueKind == JsonValueKind.Number ? el.GetInt32() : 0;
-                    _letterProgress[i] = Math.Clamp(v, 0, MaxLetterProgress);
-                    i++;
                 }
+
+                // Update the mastery text
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    int mastered = _letterProgress.Count(p => p >= MaxLetterProgress);
+                    lblMastery.Text = $"MASTERY: {mastered} / {LetterCount} ({account.MasteryLevel})";
+                });
             }
             catch
             {
@@ -540,28 +734,13 @@ namespace Signify.Pages
 
         private void SaveLetterProgress()
         {
-            string? path = AuthService.GetLearnProgressFilePath();
-            if (string.IsNullOrEmpty(path))
+            if (!AuthService.IsLoggedIn)
             {
                 return;
             }
 
-            try
-            {
-                string? dir = Path.GetDirectoryName(path);
-                if (!string.IsNullOrEmpty(dir))
-                {
-                    Directory.CreateDirectory(dir);
-                }
-
-                var payload = new { Levels = _letterProgress.ToArray() };
-                string json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(path, json);
-            }
-            catch
-            {
-                // Ignore disk errors.
-            }
+            // In backend mode, we do not save bulk arrays down to local disk.
+            // When progress is made, AuthService.UpdateProgress(char, level) should be invoked individually.
         }
 
         private static (string Label, float Probability) GetTopProbability(Dictionary<string, float>? probabilities)

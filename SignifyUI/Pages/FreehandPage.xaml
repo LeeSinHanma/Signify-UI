@@ -173,14 +173,6 @@
                     Orientation="Horizontal"
                     VerticalAlignment="Center">
 
-                        <Button x:Name="btnHelp"
-                    Content="?"
-                    Style="{StaticResource IconBtn}"
-                    Width="36"
-                    Height="36"
-                    Margin="0,0,8,0"
-                    ToolTip="Help"/>
-
                         <Button x:Name="btnSettings"
                     Content="⚙"
                     Style="{StaticResource IconBtn}"
@@ -204,24 +196,10 @@
                         Orientation="Vertical">
 
                 <!-- Camera toggle — enables or disables the webcam feed -->
-                <Button x:Name="btnCameraToggle"
-                        Content="📷"
-                        Style="{StaticResource IconBtn}"
-                        ToolTip="Toggle Camera"
-                        Margin="0,0,0,10"/>
 
                 <!-- Screenshot — captures the current camera frame -->
-                <Button x:Name="btnScreenshot"
-                        Content="📸"
-                        Style="{StaticResource IconBtn}"
-                        ToolTip="Take Screenshot"
-                        Margin="0,0,0,10"/>
 
                 <!-- Brightness — adjusts camera exposure/brightness -->
-                <Button x:Name="btnBrightness"
-                        Content="☀"
-                        Style="{StaticResource IconBtn}"
-                        ToolTip="Adjust Brightness"/>
 
             </StackPanel>
 
@@ -249,38 +227,6 @@
                  Appears when the user beats their confidence record.
                  Toggle Visibility between Visible/Collapsed in code-behind.
             ════════════════════════════════════════════════ -->
-            <Border x:Name="pnlNewRecord"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Margin="0,64,178,0"
-                    Width="190"
-                    Background="#1C1C2E"
-                    BorderBrush="#F5C518"
-                    BorderThickness="1.5"
-                    CornerRadius="9"
-                    Padding="11,8"
-                    Visibility="Visible">
-                <StackPanel Orientation="Horizontal">
-
-                    <!-- Gold star icon -->
-                    <TextBlock Text="★"
-                               Foreground="#F5C518" FontSize="18"
-                               VerticalAlignment="Center"
-                               Margin="0,0,9,0"/>
-
-                    <!-- Two-line label: headline + subtitle -->
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="NEW RECORD!"
-                                   Foreground="White"
-                                   FontSize="11" FontWeight="Bold"
-                                   FontFamily="Segoe UI"/>
-                        <TextBlock Text="98.4% Confidence Reached"
-                                   Foreground="#8888AA"
-                                   FontSize="9"
-                                   FontFamily="Segoe UI"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
 
 
             <!-- ════════════════════════════════════════════════
@@ -299,67 +245,6 @@
                      Shows live session stats: signs sent, accuracy, time.
                      TextBlock Names are set so code-behind can update them.
                 ─────────────────────────────────────────────┘ -->
-                <Border x:Name="pnlSessionRecap"
-                        Background="#20203A"
-                        CornerRadius="12"
-                        Padding="14,13"
-                        Margin="0,0,0,10">
-                    <StackPanel>
-
-                        <!-- Section title -->
-                        <TextBlock Text="SESSION RECAP"
-                                   Foreground="#666688" FontSize="9"
-                                   FontWeight="Bold" FontFamily="Segoe UI"
-                                   Margin="0,0,0,11"/>
-
-                        <!-- Row: Signs Sent -->
-                        <Grid Margin="0,0,0,7">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Signs Sent"
-                                       Foreground="#9090AA" FontSize="12" FontFamily="Segoe UI"/>
-                            <!-- Bind to ViewModel or update in code-behind -->
-                            <TextBlock x:Name="lblSignsSent"
-                                       Grid.Column="1"
-                                       Text="42"
-                                       Foreground="White"
-                                       FontSize="12" FontWeight="Bold" FontFamily="Segoe UI"/>
-                        </Grid>
-
-                        <!-- Row: Accuracy (highlighted yellow) -->
-                        <Grid Margin="0,0,0,7">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Accuracy"
-                                       Foreground="#9090AA" FontSize="12" FontFamily="Segoe UI"/>
-                            <TextBlock x:Name="lblAccuracy"
-                                       Grid.Column="1"
-                                       Text="91%"
-                                       Foreground="#F5C518"
-                                       FontSize="12" FontWeight="Bold" FontFamily="Segoe UI"/>
-                        </Grid>
-
-                        <!-- Row: Elapsed session time -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Time"
-                                       Foreground="#9090AA" FontSize="12" FontFamily="Segoe UI"/>
-                            <TextBlock x:Name="lblSessionTime"
-                                       Grid.Column="1"
-                                       Text="12:04"
-                                       Foreground="White"
-                                       FontSize="12" FontWeight="Bold" FontFamily="Segoe UI"/>
-                        </Grid>
-
-                    </StackPanel>
-                </Border>
 
                 <!-- ┌─ SUGGESTED LETTERS CARD ──────────────────
                      Shows letters that are close to the detected sign.
@@ -470,31 +355,10 @@
                         Margin="0,0,0,16">
 
                 <!-- CLEAR — resets the current detection result and clears state -->
-                <Button x:Name="btnClear"
-                        Content="✕   CLEAR"
-                        Style="{StaticResource ActionBtn}"
-                        Background="#2A2A42"
-                        Width="150"
-                        Margin="0,0,10,0"
-                        ToolTip="Clear the current sign"/>
 
                 <!-- SUBMIT SIGN — confirms and logs the detected letter (primary action) -->
-                <Button x:Name="btnSubmitSign"
-                        Content="►   SUBMIT SIGN"
-                        Style="{StaticResource ActionBtn}"
-                        Background="#7B61FF"
-                        FontWeight="Bold"
-                        Width="188"
-                        Margin="0,0,10,0"
-                        ToolTip="Submit this detected sign"/>
 
                 <!-- LOG — opens the session sign history / log view -->
-                <Button x:Name="btnLog"
-                        Content="🕐   LOG"
-                        Style="{StaticResource ActionBtn}"
-                        Background="#2A2A42"
-                        Width="150"
-                        ToolTip="View sign log history"/>
 
             </StackPanel>
 

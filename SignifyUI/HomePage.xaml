@@ -125,9 +125,6 @@
                     </StackPanel>
 
                     <!-- Academy tab — inactive, muted -->
-                    <Button x:Name="btnTabAcademy"
-                            Style="{StaticResource NavTabBtn}"
-                            Content="Academy"/>
                 </StackPanel>
 
                 <!-- Settings and Profile icon buttons -->

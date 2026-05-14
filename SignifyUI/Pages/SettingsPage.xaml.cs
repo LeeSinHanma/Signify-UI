@@ -46,12 +46,10 @@ namespace Signify.Pages
             btnCatAudio.Click += (s, e) => ShowCategory("Audio");
             btnCatAppearance.Click += (s, e) => ShowCategory("Appearance");
             btnCatAccount.Click += (s, e) => ShowCategory("Account");
-            
+
             sldHandSensitivity.ValueChanged += (s, e) => lblHandSensValue.Text = $"{sldHandSensitivity.Value:0}%";
             sldConfidenceThresh.ValueChanged += (s, e) => lblConfidenceThreshValue.Text = $"{sldConfidenceThresh.Value:0}%";
-            
-            btnApplyChanges.Click += BtnApplyChanges_Click;
-            btnResetDefaults.Click += BtnResetDefaults_Click;
+
             btnHelp.Click += BtnHelp_Click;
         }
 
@@ -95,12 +93,51 @@ namespace Signify.Pages
                     lblSectionTitle.Text = "Account";
                     lblSectionDesc.Text = "Manage your profile, sync preferences, and privacy settings.";
                     pnlAccountSettings.Visibility = Visibility.Visible;
+                    RefreshAccountPanel();
                     break;
             }
 
             if (_activeCategory != null)
             {
                 _activeCategory.Style = (Style)FindResource("CategoryBtn_Active");
+            }
+        }
+
+        private void RefreshAccountPanel()
+        {
+            var (success, _, account) = SignifyUI.Services.AuthService.GetCurrentAccount();
+            if (success && account != null)
+            {
+                lblAccountUsername.Text = $"@{account.Username}";
+                lblAccountName.Text = account.Name;
+                lblAccountMastery.Text = account.MasteryLevel;
+
+                string imagePath = account.MasteryLevel.ToLowerInvariant() switch
+                {
+                    "beginner" => "pack://application:,,,/RankImages/beginner.png",
+                    "intermediate" => "pack://application:,,,/RankImages/intermediate.png",
+                    "advanced" => "pack://application:,,,/RankImages/advanced.png",
+                    "expert" => "pack://application:,,,/RankImages/expert.png",
+                    "mastery" => "pack://application:,,,/RankImages/mastery.png",
+                    _ => "pack://application:,,,/RankImages/beginner.png"
+                };
+
+                try
+                {
+                    imgRank.Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(imagePath));
+                }
+                catch
+                {
+                    // Fallback or ignore if image not found
+                    imgRank.Source = null;
+                }
+            }
+            else
+            {
+                lblAccountUsername.Text = "(@not_logged_in)";
+                lblAccountName.Text = "Not Logged In";
+                lblAccountMastery.Text = "-";
+                imgRank.Source = null;
             }
         }
 
@@ -218,18 +255,25 @@ namespace Signify.Pages
         }
 
         // ── BUTTON HANDLERS ───────────────────────────────────────────
-        private void BtnApplyChanges_Click(object sender, RoutedEventArgs e)
+        private void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
-            SaveSettings();
-        }
+            var result = MessageBox.Show(
+                "Are you sure you want to logout off your account?", 
+                "Confirm Logout",
+                MessageBoxButton.YesNo, 
+                MessageBoxImage.Question);
 
-        private void BtnResetDefaults_Click(object sender, RoutedEventArgs e)
-        {
-            var result = MessageBox.Show("Reset all settings to defaults? This cannot be undone.", "Confirm Reset",
-                MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result == MessageBoxResult.Yes)
             {
-                ResetToDefaults();
+                SignifyUI.Services.AuthService.Logout();
+
+                // Go completely back to homepage wrapper where they will be prompted to login again 
+                // by nature of freehand navigation blocking or topbar auth button.
+                var mainWindow = Application.Current.MainWindow as SignifyUI.MainWindow;
+                if (mainWindow != null)
+                {
+                    mainWindow.MainFrame.Navigate(new SignifyUI.HomePage());
+                }
             }
         }
 
@@ -249,7 +293,7 @@ APPEARANCE
 Customize the visual theme and interface appearance.
 
 ACCOUNT
-Manage your profile and privacy settings.
+View your profile attributes, sign-in username, and global mastery rank.
 
 TOGGLES
 • Haptic Feedback: Enable vibration feedback on supported devices

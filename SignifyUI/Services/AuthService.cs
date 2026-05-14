@@ -1,26 +1,47 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using SignifyUI.Models;
 
 namespace SignifyUI.Services
 {
     /// <summary>
-    /// Simple file-based authentication service for user registration and login.
-    /// Stores users in a JSON file with hashed passwords.
+    /// Backend-based authentication service.
+    /// Calls the Python FastAPI account endpoints for registration and login.
     /// </summary>
     public static class AuthService
     {
-        private static readonly string DataFolder = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Signify"
-        );
+        public sealed class AccountInfo
+        {
+            public int Id { get; init; }
+            public string Username { get; init; } = string.Empty;
+            public string Name { get; init; } = string.Empty;
+            public string MasteryLevel { get; init; } = string.Empty;
+            public Dictionary<string, int> Progress { get; init; } = new Dictionary<string, int>();
+        }
 
-        private static readonly string UsersFile = Path.Combine(DataFolder, "users.json");
+        public sealed class ProgressUpdateResult
+        {
+            public string Message { get; init; } = string.Empty;
+            public string MasteryLevel { get; init; } = string.Empty;
+            public Dictionary<string, int> Progress { get; init; } = new Dictionary<string, int>();
+        }
+
+        private static readonly HttpClient Http = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(8)
+        };
+
+        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true
+        };
+
+        public static string BackendBaseUrl { get; set; } = "http://127.0.0.1:8000";
 
         private static readonly string LearnProgressRoot = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -37,11 +58,8 @@ namespace SignifyUI.Services
 
         static AuthService()
         {
-            // Ensure data folder exists
-            if (!Directory.Exists(DataFolder))
-            {
-                Directory.CreateDirectory(DataFolder);
-            }
+            Http.DefaultRequestHeaders.Accept.Clear();
+            Http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         /// <summary>
@@ -113,19 +131,15 @@ namespace SignifyUI.Services
             if (password.Length < 6)
                 return (false, "Password must be at least 6 characters.");
 
-            var users = LoadUsers();
+            var payload = new
+            {
+                username = username,
+                password = password,
+                name = username,
+                mastery_level = "Beginner"
+            };
 
-            // Check if user already exists
-            if (users.Any(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase)))
-                return (false, "Username already exists.");
-
-            // Hash the password and add user
-            string passwordHash = HashPassword(password);
-            var newUser = new User(username, passwordHash);
-            users.Add(newUser);
-
-            SaveUsers(users);
-            return (true, $"Account created successfully! You can now log in.");
+            return PostJson("/account/create", payload, "Account created successfully! You can now log in.");
         }
 
         /// <summary>
@@ -137,82 +151,268 @@ namespace SignifyUI.Services
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return (false, "Username and password required.");
 
-            var users = LoadUsers();
-            var user = users.FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
-
-            if (user == null)
-                return (false, "Username or password incorrect.");
-
-            if (!VerifyPassword(password, user.PasswordHash))
-                return (false, "Username or password incorrect.");
-
-            SetLoggedInUser(user.Username);
-            return (true, $"Welcome back, {user.Username}!");
-        }
-
-        /// <summary>
-        /// Hash a password using SHA256.
-        /// </summary>
-        private static string HashPassword(string password)
-        {
-            using (var sha256 = SHA256.Create())
+            var payload = new
             {
-                var salt = Encoding.UTF8.GetBytes("Signify_Salt_2024");
-                var passwordBytes = Encoding.UTF8.GetBytes(password);
-                var combined = new byte[salt.Length + passwordBytes.Length];
-                Buffer.BlockCopy(salt, 0, combined, 0, salt.Length);
-                Buffer.BlockCopy(passwordBytes, 0, combined, salt.Length, passwordBytes.Length);
-
-                var hash = sha256.ComputeHash(combined);
-                return Convert.ToBase64String(hash);
-            }
-        }
-
-        /// <summary>
-        /// Verify a password against its hash.
-        /// </summary>
-        private static bool VerifyPassword(string password, string hash)
-        {
-            var hashOfInput = HashPassword(password);
-            return hashOfInput.Equals(hash);
-        }
-
-        /// <summary>
-        /// Load all users from the JSON file.
-        /// </summary>
-        private static List<User> LoadUsers()
-        {
-            if (!File.Exists(UsersFile))
-                return new List<User>();
+                username = username,
+                password = password
+            };
 
             try
             {
-                var json = File.ReadAllText(UsersFile);
-                var users = JsonSerializer.Deserialize<List<User>>(json);
-                return users ?? new List<User>();
-            }
-            catch
-            {
-                return new List<User>();
-            }
-        }
+                string url = BuildUrl("/account/login");
+                string json = JsonSerializer.Serialize(payload, JsonOptions);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                using var response = Http.PostAsync(url, content).GetAwaiter().GetResult();
+                string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 
-        /// <summary>
-        /// Save all users to the JSON file.
-        /// </summary>
-        private static void SaveUsers(List<User> users)
-        {
-            try
-            {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                var json = JsonSerializer.Serialize(users, options);
-                File.WriteAllText(UsersFile, json);
+                if (!response.IsSuccessStatusCode)
+                {
+                    string detail = ExtractErrorMessage(body);
+                    return (false, string.IsNullOrWhiteSpace(detail) ? "Username or password incorrect." : detail);
+                }
+
+                using JsonDocument doc = JsonDocument.Parse(body);
+                if (
+                    doc.RootElement.TryGetProperty("account", out JsonElement accountEl) &&
+                    accountEl.TryGetProperty("username", out JsonElement usernameEl)
+                )
+                {
+                    string? canonicalUsername = usernameEl.GetString();
+                    if (!string.IsNullOrWhiteSpace(canonicalUsername))
+                    {
+                        SetLoggedInUser(canonicalUsername);
+                        return (true, $"Welcome back, {canonicalUsername}!");
+                    }
+                }
+
+                // Fallback to input username if backend response shape changes.
+                SetLoggedInUser(username);
+                return (true, $"Welcome back, {username}!");
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Error saving user data: {ex.Message}", "Error", 
-                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return (false, $"Could not reach backend: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Fetches account details for the currently signed-in user.
+        /// </summary>
+        public static (bool success, string message, AccountInfo? account) GetCurrentAccount()
+        {
+            if (string.IsNullOrWhiteSpace(CurrentUsername))
+            {
+                return (false, "No user is currently signed in.", null);
+            }
+
+            return GetAccount(CurrentUsername);
+        }
+
+        /// <summary>
+        /// Fetches account details for a specific username.
+        /// </summary>
+        public static (bool success, string message, AccountInfo? account) GetAccount(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return (false, "Username cannot be empty.", null);
+            }
+
+            try
+            {
+                string url = BuildUrl($"/account/{Uri.EscapeDataString(username)}");
+                using var response = Http.GetAsync(url).GetAwaiter().GetResult();
+                string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string detail = ExtractErrorMessage(body);
+                    return (false, string.IsNullOrWhiteSpace(detail) ? "Failed to fetch account." : detail, null);
+                }
+
+                using JsonDocument doc = JsonDocument.Parse(body);
+                if (!doc.RootElement.TryGetProperty("account", out JsonElement accountEl))
+                {
+                    return (false, "Invalid backend response: missing account field.", null);
+                }
+
+                AccountInfo info = ParseAccountInfo(accountEl);
+                return (true, "OK", info);
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Could not reach backend: {ex.Message}", null);
+            }
+        }
+
+        /// <summary>
+        /// Updates progress for the currently signed-in user and returns updated mastery/progress.
+        /// </summary>
+        public static (bool success, string message, ProgressUpdateResult? result) UpdateProgress(string letter, int level)
+        {
+            if (string.IsNullOrWhiteSpace(CurrentUsername))
+            {
+                return (false, "No user is currently signed in.", null);
+            }
+
+            if (string.IsNullOrWhiteSpace(letter))
+            {
+                return (false, "Letter cannot be empty.", null);
+            }
+
+            var payload = new
+            {
+                username = CurrentUsername,
+                letter = letter,
+                level = level,
+            };
+
+            try
+            {
+                string url = BuildUrl("/account/progress");
+                string json = JsonSerializer.Serialize(payload, JsonOptions);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                using var response = Http.PostAsync(url, content).GetAwaiter().GetResult();
+                string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string detail = ExtractErrorMessage(body);
+                    return (false, string.IsNullOrWhiteSpace(detail) ? "Failed to update progress." : detail, null);
+                }
+
+                using JsonDocument doc = JsonDocument.Parse(body);
+                string message = doc.RootElement.TryGetProperty("message", out JsonElement messageEl)
+                    ? (messageEl.GetString() ?? "Progress updated.")
+                    : "Progress updated.";
+
+                string masteryLevel = doc.RootElement.TryGetProperty("mastery_level", out JsonElement masteryEl)
+                    ? (masteryEl.GetString() ?? string.Empty)
+                    : string.Empty;
+
+                Dictionary<string, int> progress = doc.RootElement.TryGetProperty("progress", out JsonElement progressEl)
+                    ? ParseProgress(progressEl)
+                    : new Dictionary<string, int>();
+
+                var result = new ProgressUpdateResult
+                {
+                    Message = message,
+                    MasteryLevel = masteryLevel,
+                    Progress = progress,
+                };
+
+                return (true, message, result);
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Could not reach backend: {ex.Message}", null);
+            }
+        }
+
+        private static (bool success, string message) PostJson(string endpoint, object payload, string successMessage)
+        {
+            try
+            {
+                string url = BuildUrl(endpoint);
+                string json = JsonSerializer.Serialize(payload, JsonOptions);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                using var response = Http.PostAsync(url, content).GetAwaiter().GetResult();
+                string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return (true, successMessage);
+                }
+
+                string detail = ExtractErrorMessage(body);
+                return (false, string.IsNullOrWhiteSpace(detail) ? "Request failed." : detail);
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Could not reach backend: {ex.Message}");
+            }
+        }
+
+        private static string BuildUrl(string endpoint)
+        {
+            string baseUrl = BackendBaseUrl.TrimEnd('/');
+            string path = endpoint.StartsWith("/") ? endpoint : $"/{endpoint}";
+            return $"{baseUrl}{path}";
+        }
+
+        private static string ExtractErrorMessage(string responseBody)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(responseBody))
+                {
+                    return string.Empty;
+                }
+
+                using JsonDocument doc = JsonDocument.Parse(responseBody);
+                if (doc.RootElement.TryGetProperty("detail", out JsonElement detail))
+                {
+                    return detail.GetString() ?? string.Empty;
+                }
+
+                if (doc.RootElement.TryGetProperty("message", out JsonElement message))
+                {
+                    return message.GetString() ?? string.Empty;
+                }
+            }
+            catch
+            {
+                // fall through
+            }
+
+            return string.Empty;
+        }
+
+        private static AccountInfo ParseAccountInfo(JsonElement accountEl)
+        {
+            int id = accountEl.TryGetProperty("id", out JsonElement idEl) && idEl.TryGetInt32(out int parsedId)
+                ? parsedId
+                : 0;
+            string username = accountEl.TryGetProperty("username", out JsonElement usernameEl)
+                ? (usernameEl.GetString() ?? string.Empty)
+                : string.Empty;
+            string name = accountEl.TryGetProperty("name", out JsonElement nameEl)
+                ? (nameEl.GetString() ?? string.Empty)
+                : string.Empty;
+            string masteryLevel = accountEl.TryGetProperty("mastery_level", out JsonElement masteryEl)
+                ? (masteryEl.GetString() ?? string.Empty)
+                : string.Empty;
+            Dictionary<string, int> progress = accountEl.TryGetProperty("progress", out JsonElement progressEl)
+                ? ParseProgress(progressEl)
+                : new Dictionary<string, int>();
+
+            return new AccountInfo
+            {
+                Id = id,
+                Username = username,
+                Name = name,
+                MasteryLevel = masteryLevel,
+                Progress = progress,
+            };
+        }
+
+        private static Dictionary<string, int> ParseProgress(JsonElement progressEl)
+        {
+            var progress = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            if (progressEl.ValueKind != JsonValueKind.Object)
+            {
+                return progress;
+            }
+
+            foreach (JsonProperty prop in progressEl.EnumerateObject())
+            {
+                if (prop.Value.TryGetInt32(out int level))
+                {
+                    progress[prop.Name] = level;
+                }
+            }
+
+            return progress;
         }
     }
 }

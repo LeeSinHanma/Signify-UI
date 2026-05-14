@@ -630,36 +630,30 @@
 
                     <!-- ACCOUNT PANEL -->
                     <StackPanel Grid.Row="2" x:Name="pnlAccountSettings" Visibility="Collapsed">
-                        <Border Background="#1C1C38" CornerRadius="10" Padding="14,10" Margin="0,0,0,16">
-                            <StackPanel>
-                                <TextBlock Text="USERNAME" Foreground="#9090B0" FontSize="10" FontWeight="Bold" FontFamily="Segoe UI" Margin="0,0,0,8"/>
-                                <TextBox Background="#252540" Foreground="White" BorderThickness="0" Padding="10,8" Height="32" Text="SignMaster"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="#1C1C38" CornerRadius="10" Padding="14,10" Margin="0,0,0,16">
-                            <StackPanel>
-                                <!-- Sync Across Devices toggle -->
-                                <Grid Margin="0,0,0,10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="🔒 Sync Across Devices" Foreground="White" FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI"/>
-                                    </StackPanel>
-                                    <CheckBox Grid.Column="1" IsChecked="False" VerticalAlignment="Center"/>
-                                </Grid>
-                                <!-- Share Anonymous Data toggle -->
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="📊 Share Anonymous Data" Foreground="White" FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI"/>
-                                    </StackPanel>
-                                    <CheckBox Grid.Column="1" IsChecked="True" VerticalAlignment="Center"/>
-                                </Grid>
+                        <Border Background="#1C1C38" CornerRadius="10" Padding="30,24" Margin="0,0,0,16">
+                            <StackPanel HorizontalAlignment="Center">
+                                <!-- Welcome Status -->
+                                <TextBlock Text="YOUR PROFILE" Foreground="#9090B0" FontSize="11" FontWeight="Bold" FontFamily="Segoe UI" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+
+                                <!-- Mastery Image -->
+                                <Image x:Name="imgRank"
+                                       Width="120" Height="120" 
+                                       Stretch="Uniform" 
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,16"/>
+
+                                <!-- Profile Fields container -->
+                                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,10">
+                                    <TextBlock x:Name="lblAccountName" Text="-" Foreground="White" FontSize="22" FontWeight="SemiBold" FontFamily="Segoe UI" HorizontalAlignment="Center" Margin="0,0,0,2"/>
+                                    <TextBlock x:Name="lblAccountUsername" Text="(@-)" Foreground="#7B61FF" FontSize="14" FontFamily="Segoe UI" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+
+                                    <Border Background="#252540" CornerRadius="8" Padding="16,8" HorizontalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Current Mastery Level: " Foreground="#9090B0" FontSize="13" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="lblAccountMastery" Text="-" Foreground="#D97B20" FontSize="14" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -668,28 +662,20 @@
                     <Grid Grid.Row="3"
                           Margin="0,20,0,0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Reset Defaults button (left) -->
-                        <Button x:Name="btnResetDefaults"
+                        <!-- Logout button (center) -->
+                        <Button x:Name="btnLogout"
                                 Grid.Column="0"
-                                Style="{StaticResource SecondaryBtn}"
-                                Content="Reset Defaults"/>
-
-                        <!-- Spacer -->
-                        <Border Grid.Column="1"/>
-
-                        <!-- Apply Changes button (right) -->
-                        <Button x:Name="btnApplyChanges"
-                                Grid.Column="2"
-                                Style="{StaticResource PrimaryBtn}"
-                                Content="Apply Changes"
-                                Margin="0,0,0,0"/>
-
+                                Background="#DC3545"
+                                Foreground="White"
+                                Height="40"
+                                Width="200"
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                Content="Logout"
+                                Click="BtnLogout_Click"/>
                     </Grid>
 
                 </Grid>
