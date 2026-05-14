@@ -1,0 +1,172 @@
+<Page x:Class="SignifyUI.CameraTest"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="cameraTest">
+
+    <Grid Margin="20" Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="Signify"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       VerticalAlignment="Center"/>
+
+            <Button Grid.Column="1"
+                    Content="Home"
+                    Width="90"
+                    Margin="10,0"/>
+
+            <Button Grid.Column="2"
+                    Content="⚙"
+                    Width="50"
+                    Margin="10,0"/>
+
+            <Button Grid.Column="3"
+                    Content="👤"
+                    Width="50"
+                    Margin="10,0"/>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Margin="0,0,20,0"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12"
+                    BorderBrush="#CFCFCF"
+                    Background="#F8F8F8">
+                <Grid>
+                    <Viewbox Stretch="Uniform"
+                             StretchDirection="DownOnly"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center">
+                        <Border Width="640"
+                                Height="480"
+                                Background="#1F1F1F"
+                                BorderBrush="#3E3E3E"
+                                BorderThickness="1"
+                                CornerRadius="6">
+                            <Grid>
+                                <Image x:Name="CameraImage"
+                                       Stretch="Uniform"/>
+                                <Canvas x:Name="LandmarkOverlay"
+                                        IsHitTestVisible="False"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"/>
+                                <TextBlock x:Name="CameraStatusText"
+                                           Text="Starting camera..."
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontSize="24"
+                                           FontWeight="SemiBold"
+                                           Foreground="#E5E5E5"/>
+                            </Grid>
+                        </Border>
+                    </Viewbox>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="16"
+                    BorderBrush="#CFCFCF"
+                    Background="#FCFCFC">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Prediction Details"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,16"/>
+                        <TextBlock x:Name="PredictionStatusText"
+                                   Text="Status: waiting for predictions..."
+                                   Foreground="#666"
+                                   Margin="0,0,0,12"/>
+
+                        <TextBlock Text="hand_detected"
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="Type: boolean"
+                                   Foreground="#555"/>
+                        <TextBlock x:Name="HandDetectedValueText"
+                                   Text="Value: true"
+                                   Margin="0,0,0,12"/>
+
+                        <TextBlock Text="label"
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="Type: string"
+                                   Foreground="#555"/>
+                        <TextBlock x:Name="LabelValueText"
+                                   Text="Value: A"
+                                   Margin="0,0,0,12"/>
+
+                        <TextBlock Text="raw_label"
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="Type: string or null"
+                                   Foreground="#555"/>
+                        <TextBlock x:Name="RawLabelValueText"
+                                   Text="Value: A"
+                                   Margin="0,0,0,12"/>
+
+                        <TextBlock Text="confidence"
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="Type: number (0 to 1)"
+                                   Foreground="#555"/>
+                        <TextBlock x:Name="ConfidenceValueText"
+                                   Text="Value: 0.87"
+                                   Margin="0,0,0,12"/>
+
+                        <TextBlock Text="probabilities"
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="Type: object map&lt;string, number&gt;"
+                                   Foreground="#555"/>
+                        <TextBlock x:Name="ProbabilitiesValueText"
+                                   Text="Value: A: 0.87"
+                                   Margin="0,0,0,12"
+                                   TextWrapping="Wrap"/>
+
+                        <TextBlock Text="handedness"
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="Type: string or null"
+                                   Foreground="#555"/>
+                        <TextBlock x:Name="HandednessValueText"
+                                   Text="Value: Right"
+                                   Margin="0,0,0,12"/>
+
+                        <TextBlock Text="handedness_score"
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="Type: number (0 to 1) or null"
+                                   Foreground="#555"/>
+                        <TextBlock x:Name="HandednessScoreValueText"
+                                   Text="Value: 0.92"
+                                   Margin="0,0,0,12"/>
+
+                        <TextBlock Text="landmarks"
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="Type: array of points or null"
+                                   Foreground="#555"/>
+                        <TextBlock x:Name="LandmarksValueText"
+                                   Text="Value: [ { x: 0.41, y: 0.58, z: -0.02 }, ... ]"
+                                   Margin="0,0,0,12"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

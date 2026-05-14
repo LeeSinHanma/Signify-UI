@@ -1,0 +1,646 @@
+﻿<Page x:Class="SignifyUI.HomePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="HomePage"
+      Background="#12122A">
+
+    <Page.Resources>
+
+        <!-- ══════════════════════════════════════════
+             NAV TAB BUTTON — transparent, muted text
+             Used in top header: Home, Academy
+        ══════════════════════════════════════════ -->
+        <Style x:Key="NavTabBtn" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8888AA"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ══════════════════════════════════════════
+             ICON BUTTON — square dark button, white icon
+             Used for Settings and Profile in header
+        ══════════════════════════════════════════ -->
+        <Style x:Key="IconBtn" TargetType="Button">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Background" Value="#252540"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#33334A"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Page.Resources>
+
+    <!-- ══════════════════════════════════════════
+         ROOT GRID — two rows: header + content
+    ══════════════════════════════════════════ -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52"/>
+            <!-- Row 0: top navigation bar -->
+            <RowDefinition Height="*"/>
+            <!-- Row 1: hero text + mode cards -->
+        </Grid.RowDefinitions>
+
+        <!-- ══════════════════════════════════════════
+             ROW 0 — TOP NAVIGATION BAR
+             App name left | nav tabs center-right | icons far right
+        ══════════════════════════════════════════ -->
+        <Border Grid.Row="0"
+                Background="#0D0D20"
+                Padding="24,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Col 0: App name -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Col 1: spacer -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Col 2: nav tabs -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Col 3: icon buttons -->
+                </Grid.ColumnDefinitions>
+
+                <!-- App name "Signify" — purple, bold -->
+                <TextBlock x:Name="lblAppName"
+                           Grid.Column="0"
+                           Text="Signify"
+                           Foreground="#7B61FF"
+                           FontSize="20"
+                           FontWeight="Bold"
+                           FontFamily="Segoe UI"
+                           VerticalAlignment="Center"/>
+
+                <!-- Nav tabs: Home (active) + Academy -->
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,20,0">
+
+                    <!-- Home tab — active state: white text + purple underline -->
+                    <StackPanel Orientation="Vertical"
+                                Margin="0,0,24,0">
+                        <Button x:Name="btnTabHome"
+                                Style="{StaticResource NavTabBtn}"
+                                Foreground="White"
+                                FontWeight="SemiBold"
+                                Content="Home"/>
+                        <!-- Purple underline = active tab indicator -->
+                        <Rectangle Height="2"
+                                   Fill="#7B61FF"
+                                   RadiusX="1" RadiusY="1"
+                                   Margin="0,3,0,0"/>
+                    </StackPanel>
+
+                    <!-- Academy tab — inactive, muted -->
+                    <Button x:Name="btnTabAcademy"
+                            Style="{StaticResource NavTabBtn}"
+                            Content="Academy"/>
+                </StackPanel>
+
+                <!-- Settings and Profile icon buttons -->
+                <StackPanel Grid.Column="3"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,0,0">
+
+                    <!-- Settings gear icon -->
+                    <Button x:Name="btnSettings"
+                            Style="{StaticResource IconBtn}"
+                            Content="⚙"
+                            Margin="0,0,8,0"/>
+
+                    <!-- Profile / user icon -->
+                    <Button x:Name="btnProfile"
+                            Style="{StaticResource IconBtn}"
+                            Content="👤"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ══════════════════════════════════════════
+             ROW 1 — MAIN CONTENT AREA
+             Fixed for 1280x980: hero=110px, cards fill rest
+        ══════════════════════════════════════════ -->
+        <Grid Grid.Row="1"
+      HorizontalAlignment="Center"
+      MaxWidth="1280"
+      Margin="32,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="110"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="32"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+
+                <!-- ── HERO TEXT ─────────────────────────────
+                     "Welcome to Signify!" headline + subtitle
+                ─────────────────────────────────────────────── -->
+                <!-- Main headline: "Welcome to" white + "Signify!" purple -->
+                <TextBlock HorizontalAlignment="Center">
+                        <Run x:Name="runWelcome"
+                             Text="Welcome to "
+                             Foreground="White"
+                             FontSize="32"
+                             FontWeight="Bold"
+                             FontFamily="Segoe UI"/>
+                        <Run x:Name="runAppTitle"
+                             Text="Signify!"
+                             Foreground="#7B61FF"
+                             FontSize="32"
+                             FontWeight="Bold"
+                             FontFamily="Segoe UI"/>
+                </TextBlock>
+
+                <!-- Subtitle below headline -->
+                <TextBlock x:Name="lblSubtitle"
+                               Text="Start your journey to master American Sign Language"
+                               Foreground="#8888AA"
+                               FontSize="14"
+                               FontFamily="Segoe UI"
+                               HorizontalAlignment="Center"
+                               Margin="0,6,0,0"/>
+            </StackPanel>
+
+            <!-- ── 2×2 MODE CARD GRID fills remaining height ── -->
+            <UniformGrid x:Name="gridModeCards"
+             Grid.Row="1"
+             Columns="2"
+             Rows="2"
+             HorizontalAlignment="Center"
+             VerticalAlignment="Center"
+             MaxWidth="1180"
+             MaxHeight="700"
+             Margin="0,10,0,10">
+
+                <!-- ════════════════════════════════════════
+                         CARD 1 — FREEHAND MODE
+                         Accent color: Teal #1A9E75
+                         Tag: PRACTICE
+                    ════════════════════════════════════════ -->
+                <Button x:Name="btnCardFreehand"
+                            Height="260"
+                            MaxWidth="570"
+                            Click="btnCardFreehand_Click"
+                            Margin="10"
+                            Cursor="Hand"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            Padding="0">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <!-- Card outer border with teal top accent line -->
+                            <Border CornerRadius="14"
+                                        Background="#161630"
+                                        ClipToBounds="True">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" Opacity="0.3"
+                                                          BlurRadius="12" ShadowDepth="2"/>
+                                </Border.Effect>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <!-- Col 0: colored accent panel with icon -->
+                                        <ColumnDefinition Width="130"/>
+                                        <!-- Col 1: text content panel -->
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- LEFT: teal accent panel with ghost hand icon -->
+                                    <Border Grid.Column="0"
+                                                Background="#1A9E75"
+                                                CornerRadius="14,0,0,14">
+                                        <!-- Ghost/watermark large icon centered -->
+                                        <TextBlock Text="🖐"
+                                                       FontSize="64"
+                                                       Opacity="0.25"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                    </Border>
+
+                                    <!-- RIGHT: dark content panel -->
+                                    <Border Grid.Column="1"
+                                                Background="#1C1C38"
+                                                CornerRadius="0,14,14,0"
+                                                Padding="20,18,16,16">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <!-- Title -->
+                                                <RowDefinition Height="*"/>
+                                                <!-- Description -->
+                                                <RowDefinition Height="Auto"/>
+                                                <!-- Tag + arrow row -->
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Mode title -->
+                                            <TextBlock x:Name="lblFreehandTitle"
+                                                           Grid.Row="0"
+                                                           Text="Freehand Mode"
+                                                           Foreground="White"
+                                                           FontSize="18"
+                                                           FontWeight="Bold"
+                                                           FontFamily="Segoe UI"
+                                                           Margin="0,0,0,8"/>
+
+                                            <!-- Mode description -->
+                                            <TextBlock x:Name="lblFreehandDesc"
+                                                           Grid.Row="1"
+                                                           Text="Practice signing naturally with real-time hand tracking and feedback."
+                                                           Foreground="#9090B0"
+                                                           FontSize="13"
+                                                           FontFamily="Segoe UI"
+                                                           TextWrapping="Wrap"
+                                                           LineHeight="20"/>
+
+                                            <!-- Bottom row: tag badge left + arrow right -->
+                                            <Grid Grid.Row="2" Margin="0,14,0,0">
+                                                <!-- PRACTICE tag badge -->
+                                                <Border HorizontalAlignment="Left"
+                                                            Background="#1A9E75"
+                                                            CornerRadius="5"
+                                                            Padding="10,4">
+                                                    <TextBlock Text="PRACTICE"
+                                                                   Foreground="White"
+                                                                   FontSize="10"
+                                                                   FontWeight="Bold"
+                                                                   FontFamily="Segoe UI"/>
+                                                </Border>
+
+                                                <!-- Arrow → right side -->
+                                                <TextBlock Text="→"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="#555577"
+                                                               FontSize="16"/>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Opacity" Value="0.88"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Opacity" Value="0.72"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <!-- ════════════════════════════════════════
+                         CARD 2 — LEARN MODE
+                         Accent color: Purple #7B61FF
+                         Tag: LESSONS
+                    ════════════════════════════════════════ -->
+                <Button x:Name="btnCardLearn"
+                            Height="260"
+                            MaxWidth="570"
+                            Click="btnCardLearn_Click"
+                            Margin="10"
+                            Cursor="Hand"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            Padding="0">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border CornerRadius="14"
+                                        Background="#161630"
+                                        ClipToBounds="True">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" Opacity="0.3"
+                                                          BlurRadius="12" ShadowDepth="2"/>
+                                </Border.Effect>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- LEFT: purple accent panel with ghost graduation icon -->
+                                    <Border Grid.Column="0"
+                                                Background="#7B61FF"
+                                                CornerRadius="14,0,0,14">
+                                        <TextBlock Text="🎓"
+                                                       FontSize="64"
+                                                       Opacity="0.25"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                    </Border>
+
+                                    <!-- RIGHT: dark content panel -->
+                                    <Border Grid.Column="1"
+                                                Background="#1C1C38"
+                                                CornerRadius="0,14,14,0"
+                                                Padding="20,18,16,16">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock x:Name="lblLearnTitle"
+                                                           Grid.Row="0"
+                                                           Text="Learn Mode"
+                                                           Foreground="White"
+                                                           FontSize="18"
+                                                           FontWeight="Bold"
+                                                           FontFamily="Segoe UI"
+                                                           Margin="0,0,0,8"/>
+
+                                            <TextBlock x:Name="lblLearnDesc"
+                                                           Grid.Row="1"
+                                                           Text="Structured lessons covering alphabet, vocabulary, and grammar basics."
+                                                           Foreground="#9090B0"
+                                                           FontSize="13"
+                                                           FontFamily="Segoe UI"
+                                                           TextWrapping="Wrap"
+                                                           LineHeight="20"/>
+
+                                            <Grid Grid.Row="2" Margin="0,14,0,0">
+                                                <!-- LESSONS tag badge -->
+                                                <Border HorizontalAlignment="Left"
+                                                            Background="#5A45CC"
+                                                            CornerRadius="5"
+                                                            Padding="10,4">
+                                                    <TextBlock Text="LESSONS"
+                                                                   Foreground="White"
+                                                                   FontSize="10"
+                                                                   FontWeight="Bold"
+                                                                   FontFamily="Segoe UI"/>
+                                                </Border>
+
+                                                <TextBlock Text="→"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="#555577"
+                                                               FontSize="16"/>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Opacity" Value="0.88"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Opacity" Value="0.72"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <!-- ════════════════════════════════════════
+                         CARD 3 — SENTENCE BUILDER
+                         Accent color: Orange #D97B20
+                         Tag: SANDBOX
+                    ════════════════════════════════════════ -->
+                <Button x:Name="btnCardSentenceBuilder"
+                            Height="260"
+                            MaxWidth="570"
+                            Click="btnCardSentenceBuilder_Click"
+                            Margin="10"
+                            Cursor="Hand"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            Padding="0">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border CornerRadius="14"
+                                        Background="#161630"
+                                        ClipToBounds="True">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" Opacity="0.3"
+                                                          BlurRadius="12" ShadowDepth="2"/>
+                                </Border.Effect>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- LEFT: orange accent panel with ghost pencil icon -->
+                                    <Border Grid.Column="0"
+                                                Background="#D97B20"
+                                                CornerRadius="14,0,0,14">
+                                        <TextBlock Text="✏"
+                                                       FontSize="64"
+                                                       Opacity="0.25"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                    </Border>
+
+                                    <!-- RIGHT: dark content panel -->
+                                    <Border Grid.Column="1"
+                                                Background="#1C1C38"
+                                                CornerRadius="0,14,14,0"
+                                                Padding="20,18,16,16">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock x:Name="lblSentenceTitle"
+                                                           Grid.Row="0"
+                                                           Text="Sentence Builder"
+                                                           Foreground="White"
+                                                           FontSize="18"
+                                                           FontWeight="Bold"
+                                                           FontFamily="Segoe UI"
+                                                           Margin="0,0,0,8"/>
+
+                                            <TextBlock x:Name="lblSentenceDesc"
+                                                           Grid.Row="1"
+                                                           Text="Combine individual signs to master fluid conversational structures."
+                                                           Foreground="#9090B0"
+                                                           FontSize="13"
+                                                           FontFamily="Segoe UI"
+                                                           TextWrapping="Wrap"
+                                                           LineHeight="20"/>
+
+                                            <Grid Grid.Row="2" Margin="0,14,0,0">
+                                                <!-- SANDBOX tag badge -->
+                                                <Border HorizontalAlignment="Left"
+                                                            Background="#A85C10"
+                                                            CornerRadius="5"
+                                                            Padding="10,4">
+                                                    <TextBlock Text="SANDBOX"
+                                                                   Foreground="White"
+                                                                   FontSize="10"
+                                                                   FontWeight="Bold"
+                                                                   FontFamily="Segoe UI"/>
+                                                </Border>
+
+                                                <TextBlock Text="→"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="#555577"
+                                                               FontSize="16"/>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Opacity" Value="0.88"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Opacity" Value="0.72"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <!-- ════════════════════════════════════════
+                         CARD 4 — SETTINGS
+                         Accent color: Medium Purple #5A45CC
+                         Tag: CONFIGURE
+                    ════════════════════════════════════════ -->
+                <Button x:Name="btnCardSettings"
+                            Height="260"
+                            MaxWidth="570"
+                            Click="btnCardSettings_Click"
+                            Margin="10"
+                            Cursor="Hand"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            Padding="0">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border CornerRadius="14"
+                                        Background="#161630"
+                                        ClipToBounds="True">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" Opacity="0.3"
+                                                          BlurRadius="12" ShadowDepth="2"/>
+                                </Border.Effect>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- LEFT: mid-purple accent panel with ghost gear icon -->
+                                    <Border Grid.Column="0"
+                                                Background="#5A45CC"
+                                                CornerRadius="14,0,0,14">
+                                        <TextBlock Text="⚙"
+                                                       FontSize="64"
+                                                       Opacity="0.25"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                    </Border>
+
+                                    <!-- RIGHT: dark content panel -->
+                                    <Border Grid.Column="1"
+                                                Background="#1C1C38"
+                                                CornerRadius="0,14,14,0"
+                                                Padding="20,18,16,16">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock x:Name="lblSettingsTitle"
+                                                           Grid.Row="0"
+                                                           Text="Settings"
+                                                           Foreground="White"
+                                                           FontSize="18"
+                                                           FontWeight="Bold"
+                                                           FontFamily="Segoe UI"
+                                                           Margin="0,0,0,8"/>
+
+                                            <TextBlock x:Name="lblSettingsDesc"
+                                                           Grid.Row="1"
+                                                           Text="Calibrate camera tracking, customize avatar, and manage your profile."
+                                                           Foreground="#9090B0"
+                                                           FontSize="13"
+                                                           FontFamily="Segoe UI"
+                                                           TextWrapping="Wrap"
+                                                           LineHeight="20"/>
+
+                                            <Grid Grid.Row="2" Margin="0,14,0,0">
+                                                <!-- CONFIGURE tag badge -->
+                                                <Border HorizontalAlignment="Left"
+                                                            Background="#3D2FAA"
+                                                            CornerRadius="5"
+                                                            Padding="10,4">
+                                                    <TextBlock Text="CONFIGURE"
+                                                                   Foreground="White"
+                                                                   FontSize="10"
+                                                                   FontWeight="Bold"
+                                                                   FontFamily="Segoe UI"/>
+                                                </Border>
+
+                                                <TextBlock Text="→"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="#555577"
+                                                               FontSize="16"/>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Opacity" Value="0.88"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Opacity" Value="0.72"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+            </UniformGrid>
+            <!-- end gridModeCards -->
+
+            <!-- Row 2: bottom breathing room is handled by RowDefinition Height=32 -->
+        </Grid>
+        <!-- end Row 1 content -->
+
+    </Grid>
+</Page>
