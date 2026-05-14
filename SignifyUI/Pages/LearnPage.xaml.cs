@@ -103,8 +103,28 @@ namespace Signify.Pages
             _activeLetterBtn = btnLetterA;
             SelectLetter(0);
 
+            RefreshUserDisplay();
             ResetAiRecognitionPanel();
             StartCamera();
+        }
+
+        private void LearnPage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            AuthService.SessionChanged -= AuthService_SessionChanged;
+            SaveLetterProgress();
+            StopCamera();
+        }
+
+        private void RefreshUserDisplay()
+        {
+            if (AuthService.IsLoggedIn && !string.IsNullOrWhiteSpace(AuthService.CurrentUsername))
+            {
+                txtUserDisplay.Text = $"User: {AuthService.CurrentUsername}";
+            }
+            else
+            {
+                txtUserDisplay.Text = "";
+            }
         }
 
         // ── Shared click handler wired to every letter button ────────────
@@ -213,13 +233,6 @@ namespace Signify.Pages
         private void btnBack_Click(object sender, RoutedEventArgs e)
         {
             NavigationService?.GoBack();
-        }
-
-        private void LearnPage_Unloaded(object sender, RoutedEventArgs e)
-        {
-            AuthService.SessionChanged -= AuthService_SessionChanged;
-            SaveLetterProgress();
-            StopCamera();
         }
 
         private void StartCamera()

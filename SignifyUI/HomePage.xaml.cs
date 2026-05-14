@@ -81,11 +81,13 @@ namespace SignifyUI
             {
                 runWelcome.Text = "Welcome back, ";
                 runAppTitle.Text = $"{AuthService.CurrentUsername}!";
+                txtUserDisplay.Text = $"User: {AuthService.CurrentUsername}";
             }
             else
             {
                 runWelcome.Text = "Welcome to ";
                 runAppTitle.Text = "Signify!";
+                txtUserDisplay.Text = "";
             }
         }
 

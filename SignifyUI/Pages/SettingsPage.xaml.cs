@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.IO;
 using System.Text.Json;
 using System.Collections.Generic;
+using SignifyUI.Services;
 
 // ═══════════════════════════════════════════════════════════════
 //  SettingsPage.xaml.cs  —  Code-Behind
@@ -28,15 +29,34 @@ namespace Signify.Pages
         public SettingsPage()
         {
             InitializeComponent();
-            
+
             // Load persisted settings
             LoadSettings();
-            
+
             // Wire up event handlers
             WireEventHandlers();
-            
+
+            // Subscribe to auth changes
+            AuthService.SessionChanged += AuthService_SessionChanged;
+
             // Initialize the page with Vision & Input category
             ShowCategory("Vision");
+            RefreshUserDisplay();
+        }
+
+        // ── USER DISPLAY ───────────────────────────────────────────────
+        private void AuthService_SessionChanged(object? sender, EventArgs e) => RefreshUserDisplay();
+
+        private void RefreshUserDisplay()
+        {
+            if (AuthService.IsLoggedIn && !string.IsNullOrWhiteSpace(AuthService.CurrentUsername))
+            {
+                txtUserDisplay.Text = $"User: {AuthService.CurrentUsername}";
+            }
+            else
+            {
+                txtUserDisplay.Text = "";
+            }
         }
 
         // ── CATEGORY NAVIGATION ───────────────────────────────────────
@@ -46,10 +66,10 @@ namespace Signify.Pages
             btnCatAudio.Click += (s, e) => ShowCategory("Audio");
             btnCatAppearance.Click += (s, e) => ShowCategory("Appearance");
             btnCatAccount.Click += (s, e) => ShowCategory("Account");
-            
+
             sldHandSensitivity.ValueChanged += (s, e) => lblHandSensValue.Text = $"{sldHandSensitivity.Value:0}%";
             sldConfidenceThresh.ValueChanged += (s, e) => lblConfidenceThreshValue.Text = $"{sldConfidenceThresh.Value:0}%";
-            
+
             btnApplyChanges.Click += BtnApplyChanges_Click;
             btnResetDefaults.Click += BtnResetDefaults_Click;
             btnHelp.Click += BtnHelp_Click;
