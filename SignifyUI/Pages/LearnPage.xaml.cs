@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -58,6 +58,7 @@ namespace Signify.Pages
         private int _sessionCurrentIndex;
         private bool _isNoGuidePhase;
         private bool _isAdvancingSession;
+        private HashSet<char> _skippedLetters = new();
 
         private MediaPlayer _correctSoundPlayer = new MediaPlayer();
         private MediaPlayer _doneSoundPlayer = new MediaPlayer();
@@ -243,7 +244,8 @@ namespace Signify.Pages
 
             _predictionClient ??= new HandPredictionClient();
 
-            _capture = new VideoCapture(0);
+            int activeCameraIndex = LoadCameraIndexFromSettingsFileOrDefault();
+            _capture = new VideoCapture(activeCameraIndex);
             _capture.Set(VideoCaptureProperties.FrameWidth, 640);
             _capture.Set(VideoCaptureProperties.FrameHeight, 480);
 
@@ -434,10 +436,18 @@ namespace Signify.Pages
             }
 
             var random = new System.Random();
-            _sessionLetters = Letters.OrderBy(x => random.Next()).Take(5).ToList();
+            var uniqueLetters = Letters.OrderBy(x => random.Next()).Take(5).ToList();
+            
+            _sessionLetters = new List<char>(uniqueLetters);
+            for (int i = 0; i < 10; i++)
+            {
+                _sessionLetters.Add(uniqueLetters[random.Next(uniqueLetters.Count)]);
+            }
+
             _sessionCurrentIndex = 0;
             _isNoGuidePhase = false;
             _isLearningSession = true;
+            _skippedLetters.Clear();
 
             btnStartLearning.Content = "CANCEL LEARNING";
             btnStartLearning.Background = new SolidColorBrush(Color.FromRgb(0xDC, 0x35, 0x45)); // Red
@@ -459,7 +469,7 @@ namespace Signify.Pages
 
             SelectLetter(index); 
 
-            lblSessionStatus.Text = $"SESSION: {_sessionCurrentIndex + 1} / 5";
+            lblSessionStatus.Text = $"SESSION: {_sessionCurrentIndex + 1} / 15";
 
             if (_isNoGuidePhase)
             {
@@ -490,29 +500,21 @@ namespace Signify.Pages
             if (!_isLearningSession) 
             {
                 _isAdvancingSession = false;
-                return; 
+                return;
             }
 
             lblSessionInstruction.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0xC5, 0x18));
 
-            if (!_isNoGuidePhase)
+            _sessionCurrentIndex++;
+
+            if (_sessionCurrentIndex >= 15)
             {
-                _isNoGuidePhase = true;
-                LoadSessionLetter();
+                EndLearningSession(completed: true);
             }
             else
             {
-                _sessionCurrentIndex++;
-                _isNoGuidePhase = false;
-
-                if (_sessionCurrentIndex >= 5)
-                {
-                    EndLearningSession(completed: true);
-                }
-                else
-                {
-                    LoadSessionLetter();
-                }
+                _isNoGuidePhase = _sessionCurrentIndex >= 5;
+                LoadSessionLetter();
             }
 
             _isAdvancingSession = false;
@@ -538,10 +540,12 @@ namespace Signify.Pages
                 _doneSoundPlayer.Position = TimeSpan.Zero;
                 _doneSoundPlayer.Play();
 
-                MessageBox.Show("Session complete! +1 Progress for all 5 letters.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                var uniqueSessionLetters = _sessionLetters.Take(5).Where(c => !_skippedLetters.Contains(c)).ToList();
+                
+                MessageBox.Show($"Session complete! +1 Progress for {uniqueSessionLetters.Count} letter(s).", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 DateTime now = DateTime.UtcNow;
-                foreach(var c in _sessionLetters)
+                foreach(var c in uniqueSessionLetters)
                 {
                     int idx = Letters.IndexOf(c);
                     if (idx >= 0 && _letterProgress[idx] < MaxLetterProgress)
@@ -567,25 +571,20 @@ namespace Signify.Pages
         {
             if (!_isLearningSession || _isAdvancingSession) return;
 
+            // Track skipped letter so it doesn't get progress
+            _skippedLetters.Add(_sessionLetters[_sessionCurrentIndex]);
+
             // Immediately forcefully advance without the "Great Job" pause
-            if (!_isNoGuidePhase)
+            _sessionCurrentIndex++;
+
+            if (_sessionCurrentIndex >= 15)
             {
-                _isNoGuidePhase = true;
-                LoadSessionLetter();
+                EndLearningSession(completed: true);
             }
             else
             {
-                _sessionCurrentIndex++;
-                _isNoGuidePhase = false;
-
-                if (_sessionCurrentIndex >= 5)
-                {
-                    EndLearningSession(completed: true);
-                }
-                else
-                {
-                    LoadSessionLetter();
-                }
+                _isNoGuidePhase = _sessionCurrentIndex >= 5;
+                LoadSessionLetter();
             }
         }
 
@@ -788,6 +787,30 @@ namespace Signify.Pages
             }
 
             return Math.Clamp(confidence, 0f, 1f);
+        }
+
+        private static int LoadCameraIndexFromSettingsFileOrDefault(int defaultIndex = 0)
+        {
+            try
+            {
+                if (!File.Exists("settings.json")) return defaultIndex;
+
+                string json = File.ReadAllText("settings.json");
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.TryGetProperty("ActiveCameraIndex", out var indexElement))
+                {
+                    if (indexElement.ValueKind == JsonValueKind.Number)
+                    {
+                        return indexElement.GetInt32();
+                    }
+                }
+                return defaultIndex;
+            }
+            catch
+            {
+                return defaultIndex;
+            }
         }
     }
 }

@@ -297,18 +297,8 @@
                                  Style="{StaticResource AuthPasswordBox}"/>
 
                     <!-- "Forgot password?" link -->
-                    <Button Content="Forgot password?"
-                            Background="Transparent"
-                            Foreground="#7B61FF"
-                            BorderThickness="0"
-                            FontSize="11"
-                            FontFamily="Segoe UI"
-                            Padding="0"
-                            Margin="0,8,0,0"
-                            Cursor="Hand"
-                            HorizontalAlignment="Right"/>
 
-                    <!-- Login button -->
+                        <!-- Login button -->
                     <Button x:Name="btnLogin"
                             Style="{StaticResource AuthPrimaryButton}"
                             Content="Sign In"

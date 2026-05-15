@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -118,7 +118,8 @@ namespace Signify.Pages
 
                         _predictionClient ??= new HandPredictionClient();
 
-                        _capture = new VideoCapture(0); // 0 is default camera index
+                        int activeCameraIndex = LoadCameraIndexFromSettingsFileOrDefault();
+                        _capture = new VideoCapture(activeCameraIndex);
                         _capture.Set(VideoCaptureProperties.FrameWidth, 640);
                         _capture.Set(VideoCaptureProperties.FrameHeight, 480);
 
@@ -428,6 +429,30 @@ namespace Signify.Pages
             catch
             {
                 return defaultThreshold;
+            }
+        }
+
+        private static int LoadCameraIndexFromSettingsFileOrDefault(int defaultIndex = 0)
+        {
+            try
+            {
+                if (!File.Exists(SettingsFilePath)) return defaultIndex;
+
+                string json = File.ReadAllText(SettingsFilePath);
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.TryGetProperty("ActiveCameraIndex", out var indexElement))
+                {
+                    if (indexElement.ValueKind == JsonValueKind.Number)
+                    {
+                        return indexElement.GetInt32();
+                    }
+                }
+                return defaultIndex;
+            }
+            catch
+            {
+                return defaultIndex;
             }
         }
     }

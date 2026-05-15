@@ -4,6 +4,12 @@ using System.Windows.Controls;
 using System.IO;
 using System.Text.Json;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Threading;
+using System.Windows.Media.Imaging;
+using OpenCvSharp;
+using SignifyUI;
 
 // ═══════════════════════════════════════════════════════════════
 //  SettingsPage.xaml.cs  —  Code-Behind
@@ -25,18 +31,45 @@ namespace Signify.Pages
         private Dictionary<string, object> _currentSettings = new();
         private Button? _activeCategory;
 
+        private VideoCapture? _capture;
+        private CancellationTokenSource? _cameraCts;
+
+        private CalibrationHandler _calibrationHandler;
+        private BitmapSource? _latestCalibrationFrame;
+
         public SettingsPage()
         {
             InitializeComponent();
-            
+
+            // Initialization
+            _calibrationHandler = new CalibrationHandler();
+            _calibrationHandler.OnSampleCaptured += CalibrationHandler_OnSampleCaptured;
+            _calibrationHandler.OnCalibrationComplete += CalibrationHandler_OnCalibrationComplete;
+            _calibrationHandler.OnError += CalibrationHandler_OnError;
+
             // Load persisted settings
             LoadSettings();
-            
+
             // Wire up event handlers
             WireEventHandlers();
-            
+
             // Initialize the page with Vision & Input category
             ShowCategory("Vision");
+
+            _ = DetectCamerasAsync();
+
+            Unloaded += SettingsPage_Unloaded;
+        }
+
+        private void SettingsPage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            StopCamera();
+            if (_calibrationHandler != null)
+            {
+                _calibrationHandler.OnSampleCaptured -= CalibrationHandler_OnSampleCaptured;
+                _calibrationHandler.OnCalibrationComplete -= CalibrationHandler_OnCalibrationComplete;
+                _calibrationHandler.OnError -= CalibrationHandler_OnError;
+            }
         }
 
         // ── CATEGORY NAVIGATION ───────────────────────────────────────
@@ -44,7 +77,7 @@ namespace Signify.Pages
         {
             btnCatVision.Click += (s, e) => ShowCategory("Vision");
             btnCatAudio.Click += (s, e) => ShowCategory("Audio");
-            btnCatAppearance.Click += (s, e) => ShowCategory("Appearance");
+            btnCatCalibration.Click += (s, e) => ShowCategory("Calibration");
             btnCatAccount.Click += (s, e) => ShowCategory("Account");
 
             sldHandSensitivity.ValueChanged += (s, e) => lblHandSensValue.Text = $"{sldHandSensitivity.Value:0}%";
@@ -64,7 +97,7 @@ namespace Signify.Pages
             // Hide all panels first
             pnlVisionSettings.Visibility = Visibility.Collapsed;
             pnlAudioSettings.Visibility = Visibility.Collapsed;
-            pnlAppearanceSettings.Visibility = Visibility.Collapsed;
+            pnlCalibrationSettings.Visibility = Visibility.Collapsed;
             pnlAccountSettings.Visibility = Visibility.Collapsed;
 
             // Activate new category button, update title/description, and show corresponding panel
@@ -82,11 +115,11 @@ namespace Signify.Pages
                     lblSectionDesc.Text = "Adjust sound levels, enable haptic feedback, and manage audio preferences.";
                     pnlAudioSettings.Visibility = Visibility.Visible;
                     break;
-                case "Appearance":
-                    _activeCategory = btnCatAppearance;
-                    lblSectionTitle.Text = "Appearance";
-                    lblSectionDesc.Text = "Customize the visual appearance of the application and select your preferred theme.";
-                    pnlAppearanceSettings.Visibility = Visibility.Visible;
+                case "Calibration":
+                    _activeCategory = btnCatCalibration;
+                    lblSectionTitle.Text = "Calibration";
+                    lblSectionDesc.Text = "Train and capture custom hand signs to improve recognition accuracy.";
+                    pnlCalibrationSettings.Visibility = Visibility.Visible;
                     break;
                 case "Account":
                     _activeCategory = btnCatAccount;
@@ -100,6 +133,15 @@ namespace Signify.Pages
             if (_activeCategory != null)
             {
                 _activeCategory.Style = (Style)FindResource("CategoryBtn_Active");
+            }
+
+            if (category == "Calibration")
+            {
+                StartCamera();
+            }
+            else
+            {
+                StopCamera();
             }
         }
 
@@ -169,22 +211,34 @@ namespace Signify.Pages
         {
             try
             {
-                // Collect current control values
-                _currentSettings["HandSensitivity"] = sldHandSensitivity.Value;
-                _currentSettings["ConfidenceThreshold"] = sldConfidenceThresh.Value;
-                _currentSettings["HapticFeedback"] = chkHapticFeedback.IsChecked ?? false;
-                _currentSettings["DarkAtmosphere"] = chkDarkAtmosphere.IsChecked ?? false;
-
-                // Serialize to JSON
-                string json = JsonSerializer.Serialize(_currentSettings, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(SettingsFilePath, json);
-
+                SaveSettingsSilent();
                 MessageBox.Show("Settings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error saving settings: {ex.Message}", "Settings Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void SaveSettingsSilent()
+        {
+            // Collect current control values
+            _currentSettings["HandSensitivity"] = sldHandSensitivity.Value;
+            _currentSettings["ConfidenceThreshold"] = sldConfidenceThresh.Value;
+            _currentSettings["HapticFeedback"] = chkHapticFeedback.IsChecked ?? false;
+            _currentSettings["DarkAtmosphere"] = chkDarkAtmosphere.IsChecked ?? false;
+            if (cmbCamera.SelectedIndex >= 0 && cmbCamera.ItemsSource is List<string> cams && cams.Count > cmbCamera.SelectedIndex)
+            {
+                var text = cams[cmbCamera.SelectedIndex];
+                if (text.StartsWith("Camera ") && int.TryParse(text.Substring(7), out int idx))
+                {
+                    _currentSettings["ActiveCameraIndex"] = idx;
+                }
+            }
+
+            // Serialize to JSON
+            string json = JsonSerializer.Serialize(_currentSettings, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(SettingsFilePath, json);
         }
 
         private void ApplySettingsToControls()
@@ -236,6 +290,70 @@ namespace Signify.Pages
                     chkDarkAtmosphere.IsChecked = b2;
                 }
             }
+
+            // Camera will be selected after detection finishes
+        }
+
+        private async Task DetectCamerasAsync()
+        {
+            var activeCameras = new List<string>();
+
+            await Task.Run(() =>
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    using var cap = new VideoCapture(i);
+                    if (cap.IsOpened())
+                    {
+                        activeCameras.Add($"Camera {i}");
+                    }
+                }
+            });
+
+            if (activeCameras.Count == 0)
+            {
+                activeCameras.Add("Camera 0"); // Fallback
+            }
+
+            cmbCamera.ItemsSource = activeCameras;
+
+            int savedIndex = LoadCameraIndexFromSettingsFileOrDefault();
+            string targetText = $"Camera {savedIndex}";
+            int indexToSelect = activeCameras.IndexOf(targetText);
+
+            cmbCamera.SelectedIndex = indexToSelect >= 0 ? indexToSelect : 0;
+        }
+
+        private void cmbCamera_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cmbCamera.SelectedIndex >= 0)
+            {
+                SaveSettingsSilent();
+            }
+        }
+
+        private static int LoadCameraIndexFromSettingsFileOrDefault(int defaultIndex = 0)
+        {
+            try
+            {
+                if (!File.Exists(SettingsFilePath)) return defaultIndex;
+
+                string json = File.ReadAllText(SettingsFilePath);
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.TryGetProperty("ActiveCameraIndex", out var indexElement))
+                {
+                    if (indexElement.ValueKind == JsonValueKind.Number)
+                    {
+                        return indexElement.GetInt32();
+                    }
+                }
+                return defaultIndex;
+            }
+            catch
+            {
+                return defaultIndex;
+            }
         }
 
         private void ResetToDefaults()
@@ -255,6 +373,127 @@ namespace Signify.Pages
         }
 
         // ── BUTTON HANDLERS ───────────────────────────────────────────
+        private bool _isSyncingOldPassword = false;
+        private void txtOldPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (!_isSyncingOldPassword)
+            {
+                _isSyncingOldPassword = true;
+                txtOldPasswordVisible.Text = txtOldPassword.Password;
+                _isSyncingOldPassword = false;
+            }
+        }
+        private void txtOldPasswordVisible_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_isSyncingOldPassword)
+            {
+                _isSyncingOldPassword = true;
+                txtOldPassword.Password = txtOldPasswordVisible.Text;
+                _isSyncingOldPassword = false;
+            }
+        }
+
+        private bool _isSyncingNewPassword = false;
+        private void txtNewPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (!_isSyncingNewPassword)
+            {
+                _isSyncingNewPassword = true;
+                txtNewPasswordVisible.Text = txtNewPassword.Password;
+                _isSyncingNewPassword = false;
+            }
+        }
+        private void txtNewPasswordVisible_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_isSyncingNewPassword)
+            {
+                _isSyncingNewPassword = true;
+                txtNewPassword.Password = txtNewPasswordVisible.Text;
+                _isSyncingNewPassword = false;
+            }
+        }
+
+        private bool _isSyncingConfirmPassword = false;
+        private void txtConfirmPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (!_isSyncingConfirmPassword)
+            {
+                _isSyncingConfirmPassword = true;
+                txtConfirmPasswordVisible.Text = txtConfirmPassword.Password;
+                _isSyncingConfirmPassword = false;
+            }
+        }
+        private void txtConfirmPasswordVisible_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_isSyncingConfirmPassword)
+            {
+                _isSyncingConfirmPassword = true;
+                txtConfirmPassword.Password = txtConfirmPasswordVisible.Text;
+                _isSyncingConfirmPassword = false;
+            }
+        }
+
+        private void chkShowPasswords_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            bool show = chkShowPasswords.IsChecked ?? false;
+
+            txtOldPassword.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+            txtOldPasswordVisible.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+
+            txtNewPassword.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+            txtNewPasswordVisible.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+
+            txtConfirmPassword.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+            txtConfirmPasswordVisible.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void BtnChangePassword_Click(object sender, RoutedEventArgs e)
+        {
+            if (!SignifyUI.Services.AuthService.IsLoggedIn || string.IsNullOrWhiteSpace(SignifyUI.Services.AuthService.CurrentUsername))
+            {
+                MessageBox.Show("You must be logged in to change your password.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            string oldPassword = txtOldPassword.Password;
+            string newPassword = txtNewPassword.Password;
+            string confirmPassword = txtConfirmPassword.Password;
+
+            if (string.IsNullOrWhiteSpace(oldPassword) || string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmPassword))
+            {
+                MessageBox.Show("Please fill out all password fields.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (newPassword != confirmPassword)
+            {
+                MessageBox.Show("New passwords do not match. Please try again.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            btnChangePassword.IsEnabled = false;
+
+            var (success, message) = SignifyUI.Services.AuthService.ChangePassword(
+                SignifyUI.Services.AuthService.CurrentUsername,
+                oldPassword,
+                newPassword);
+
+            if (success)
+            {
+                MessageBox.Show(message, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                txtOldPassword.Password = string.Empty;
+                txtNewPassword.Password = string.Empty;
+                txtConfirmPassword.Password = string.Empty;
+                chkShowPasswords.IsChecked = false;
+            }
+            else
+            {
+                MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            btnChangePassword.IsEnabled = true;
+        }
+
         private void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
             var result = MessageBox.Show(
@@ -300,6 +539,147 @@ TOGGLES
 • Dark Atmosphere: Use dark theme for reduced eye strain";
 
             MessageBox.Show(helpText, "Signify Settings Help", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        // ── CALIBRATION CAMERA & ACTIONS ─────────────────────────────
+        private void StartCamera()
+        {
+            if (_capture != null) return;
+            
+            int activeCameraIndex = LoadCameraIndexFromSettingsFileOrDefault();
+            _capture = new VideoCapture(activeCameraIndex);
+            if (!_capture.IsOpened())
+            {
+                txtCalibrationPlaceholder.Text = "[ Unable to open camera ]";
+                txtCalibrationPlaceholder.Visibility = Visibility.Visible;
+                _capture.Dispose();
+                _capture = null;
+                return;
+            }
+            _capture.FrameWidth = 640;
+            _capture.FrameHeight = 480;
+
+            _cameraCts = new CancellationTokenSource();
+            var token = _cameraCts.Token;
+            _ = Task.Run(() => CaptureLoop(token), token);
+        }
+
+        private void StopCamera()
+        {
+            _cameraCts?.Cancel();
+            _capture?.Release();
+            _capture?.Dispose();
+            _capture = null;
+        }
+
+        private void CaptureLoop(CancellationToken token)
+        {
+            using var frame = new Mat();
+            while (!token.IsCancellationRequested && _capture != null && _capture.IsOpened())
+            {
+                if (_capture.Read(frame) && !frame.Empty())
+                {
+                    Cv2.Flip(frame, frame, FlipMode.Y);
+                    Cv2.ImEncode(".jpg", frame, out byte[] imageBytes);
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (token.IsCancellationRequested) return;
+                        var bmp = new BitmapImage();
+                        bmp.BeginInit();
+                        bmp.StreamSource = new MemoryStream(imageBytes);
+                        bmp.CacheOption = BitmapCacheOption.OnLoad;
+                        bmp.EndInit();
+                        bmp.Freeze();
+
+                        _latestCalibrationFrame = bmp;
+                        imgCalibrationCamera.Source = bmp;
+                        txtCalibrationPlaceholder.Visibility = Visibility.Collapsed;
+                    }, DispatcherPriority.Render);
+                }
+                Thread.Sleep(33);
+            }
+        }
+
+        // ── CALIBRATION HANDLER EVENTS ───────────────────────────────
+        private void CalibrationHandler_OnSampleCaptured(object? sender, CalibrateEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                lblCalibrationStatus.Text = $"Capturing: {e.SamplesCount} samples processed for '{e.Letter}'... (Hand Detected: {e.HandDetected})";
+                lblCalibrationStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xA0, 0xFF, 0xA0)); // Green
+            });
+        }
+
+        private void CalibrationHandler_OnCalibrationComplete(object? sender, CalibrateEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                lblCalibrationStatus.Text = $"Done! Successfully captured {e.SamplesCount} frames for '{e.Letter}'. Press 'Retrain' to apply.";
+                lblCalibrationStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xF5, 0xC5, 0x18)); // Gold
+                btnCaptureCalibration.IsEnabled = true;
+            });
+        }
+
+        private void CalibrationHandler_OnError(object? sender, ErrorEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                lblCalibrationStatus.Text = $"Error: {e.GetException().Message}";
+                lblCalibrationStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0x88, 0x88)); // Red
+                btnCaptureCalibration.IsEnabled = true;
+            });
+        }
+
+        // ── CALIBRATION UI BUTTONS ───────────────────────────────────
+        private async void btnCaptureCalibration_Click(object sender, RoutedEventArgs e)
+        {
+            string letter = txtLetterToTrain.Text.Trim().ToUpper();
+            if (string.IsNullOrWhiteSpace(letter))
+            {
+                MessageBox.Show("Please enter a letter to train.", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (_latestCalibrationFrame == null)
+            {
+                MessageBox.Show("Waiting for camera frame. Try again in a moment.", "Wait", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            btnCaptureCalibration.IsEnabled = false;
+            lblCalibrationStatus.Text = "Initializing capture sequence...";
+            lblCalibrationStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x88, 0xAA, 0xFF));
+
+            _calibrationHandler.SelectLetter(letter);
+
+            // Execute the capture loop block off-thread relying on async dispatch
+            await _calibrationHandler.CaptureBurstAsync(_latestCalibrationFrame);
+        }
+
+        private async void btnRetrainCalibration_Click(object sender, RoutedEventArgs e)
+        {
+            btnRetrainCalibration.IsEnabled = false;
+            lblCalibrationStatus.Text = "Retraining in progress... Please wait.";
+            lblCalibrationStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x88, 0xAA, 0xFF));
+
+            var result = await _calibrationHandler.RetrainModelAsync();
+
+            Dispatcher.Invoke(() =>
+            {
+                if (result.Success)
+                {
+                    lblCalibrationStatus.Text = $"Retrain successful! Accuracy: {result.Accuracy * 100:0.0}% ({result.SamplesUsed} samples used)";
+                    lblCalibrationStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xA0, 0xFF, 0xA0));
+                    txtLetterToTrain.Text = "";
+                }
+                else
+                {
+                    lblCalibrationStatus.Text = $"Retrain failed: {result.Message}";
+                    lblCalibrationStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0x88, 0x88));
+                }
+
+                btnRetrainCalibration.IsEnabled = true;
+            });
         }
 
         // ── NAVIGATION ───────────────────────────────────────────────

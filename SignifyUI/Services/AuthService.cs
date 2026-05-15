@@ -196,6 +196,51 @@ namespace SignifyUI.Services
         }
 
         /// <summary>
+        /// Change the password for a user by calling the backend endpoint.
+        /// Returns success status and a message from the backend.
+        /// </summary>
+        public static (bool success, string message) ChangePassword(string username, string oldPassword, string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+                return (false, "Username cannot be empty.");
+
+            if (string.IsNullOrWhiteSpace(oldPassword))
+                return (false, "Old password cannot be empty.");
+
+            if (string.IsNullOrWhiteSpace(newPassword))
+                return (false, "New password cannot be empty.");
+
+            var payload = new
+            {
+                username = username,
+                old_password = oldPassword,
+                new_password = newPassword
+            };
+
+            try
+            {
+                string url = BuildUrl("/account/change_password");
+                string json = JsonSerializer.Serialize(payload, JsonOptions);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                using var response = Http.PostAsync(url, content).GetAwaiter().GetResult();
+                string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string detail = ExtractErrorMessage(body);
+                    return (false, string.IsNullOrWhiteSpace(detail) ? "Failed to change password." : detail);
+                }
+
+                // Success
+                return (true, "Password changed successfully.");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Could not reach backend: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Fetches account details for the currently signed-in user.
         /// </summary>
         public static (bool success, string message, AccountInfo? account) GetCurrentAccount()

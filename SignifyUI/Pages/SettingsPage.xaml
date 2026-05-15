@@ -326,13 +326,13 @@
                         </StackPanel>
                     </Button>
 
-                    <!-- Appearance category -->
-                    <Button x:Name="btnCatAppearance"
+                    <!-- Calibration category -->
+                    <Button x:Name="btnCatCalibration"
                             Style="{StaticResource CategoryBtn}"
-                            ToolTip="Appearance">
+                            ToolTip="Calibration">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🎨" Margin="0,0,8,0"/>
-                            <TextBlock Text="Appearance" VerticalAlignment="Center"/>
+                            <TextBlock Text="🎯" Margin="0,0,8,0"/>
+                            <TextBlock Text="Calibration" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
 
@@ -411,10 +411,12 @@
                                                FontFamily="Segoe UI"
                                                Margin="0,0,0,8"/>
                                     <ComboBox x:Name="cmbCamera"
-                                              Style="{StaticResource DarkComboBox}">
-                                        <ComboBoxItem Style="{StaticResource DarkComboBoxItem}" Content="Integrated Webcam (HD 720p)" IsSelected="True"/>
-                                        <ComboBoxItem Style="{StaticResource DarkComboBoxItem}" Content="External USB Camera"/>
-                                        <ComboBoxItem Style="{StaticResource DarkComboBoxItem}" Content="Built-in Camera"/>
+                                              Style="{StaticResource DarkComboBox}"
+                                              SelectionChanged="cmbCamera_SelectionChanged">
+                                        <ComboBoxItem Style="{StaticResource DarkComboBoxItem}" Content="Camera 0"/>
+                                        <ComboBoxItem Style="{StaticResource DarkComboBoxItem}" Content="Camera 1"/>
+                                        <ComboBoxItem Style="{StaticResource DarkComboBoxItem}" Content="Camera 2"/>
+                                        <ComboBoxItem Style="{StaticResource DarkComboBoxItem}" Content="Camera 3"/>
                                     </ComboBox>
                                 </StackPanel>
                             </Grid>
@@ -600,30 +602,35 @@
                         </Border>
                     </StackPanel>
 
-                    <!-- APPEARANCE PANEL -->
-                    <StackPanel Grid.Row="2" x:Name="pnlAppearanceSettings" Visibility="Collapsed">
+                    <!-- CALIBRATION PANEL -->
+                    <StackPanel Grid.Row="2" x:Name="pnlCalibrationSettings" Visibility="Collapsed">
                         <Border Background="#1C1C38" CornerRadius="10" Padding="14,10" Margin="0,0,0,16">
                             <StackPanel>
-                                <TextBlock Text="COLOR THEME" Foreground="#9090B0" FontSize="10" FontWeight="Bold" FontFamily="Segoe UI" Margin="0,0,0,8"/>
-                                <ComboBox Style="{StaticResource DarkComboBox}">
-                                    <ComboBoxItem Style="{StaticResource DarkComboBoxItem}" Content="Dark (Default)" IsSelected="True"/>
-                                    <ComboBoxItem Style="{StaticResource DarkComboBoxItem}" Content="Light"/>
-                                    <ComboBoxItem Style="{StaticResource DarkComboBoxItem}" Content="High Contrast"/>
-                                </ComboBox>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="#1C1C38" CornerRadius="10" Padding="14,10" Margin="0,0,0,16">
-                            <StackPanel>
+                                <!-- Camera Feed -->
+                                <Border Background="Black" CornerRadius="8" Height="500" Margin="0,0,0,16" ClipToBounds="True">
+                                    <Grid>
+                                        <Image x:Name="imgCalibrationCamera" Stretch="Uniform" />
+                                        <TextBlock x:Name="txtCalibrationPlaceholder" Text="[ Camera Feed ]" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Visible"/>
+                                    </Grid>
+                                </Border>
+
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="✨ Enable Animations" Foreground="White" FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI"/>
+
+                                    <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,10,0">
+                                        <TextBlock Text="LETTER TO TRAIN" Foreground="#9090B0" FontSize="10" FontWeight="Bold" FontFamily="Segoe UI" Margin="0,0,0,4"/>
+                                        <TextBox x:Name="txtLetterToTrain" MaxLength="1" Background="#252540" Foreground="White" BorderThickness="0" Padding="10,8" Height="32"/>
                                     </StackPanel>
-                                    <CheckBox Grid.Column="1" IsChecked="True" VerticalAlignment="Center"/>
+
+                                    <Button x:Name="btnCaptureCalibration" Grid.Column="1" Content="Capture" Style="{StaticResource PrimaryBtn}" Margin="0,18,10,0" Height="32" Padding="16,0" Click="btnCaptureCalibration_Click"/>
+                                    <Button x:Name="btnRetrainCalibration" Grid.Column="2" Content="Retrain" Style="{StaticResource SecondaryBtn}" Margin="0,18,0,0" Height="32" Padding="16,0" Click="btnRetrainCalibration_Click"/>
                                 </Grid>
+
+                                <TextBlock x:Name="lblCalibrationStatus" Text="Ready" Foreground="#9090B0" FontSize="12" FontFamily="Segoe UI" Margin="0,10,0,0" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -654,6 +661,58 @@
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Change Password Section -->
+                        <Border Background="#1C1C38" CornerRadius="10" Padding="14,10" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="CHANGE PASSWORD" Foreground="#9090B0" FontSize="10" FontWeight="Bold" FontFamily="Segoe UI" Margin="0,0,0,12"/>
+                                
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Old Password" Foreground="#9090B0" FontSize="12" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                                    <Grid Grid.Column="1">
+                                        <PasswordBox x:Name="txtOldPassword" Background="#252540" Foreground="White" BorderThickness="0" Padding="10,8" Height="32" FontFamily="Segoe UI" PasswordChanged="txtOldPassword_PasswordChanged"/>
+                                        <TextBox x:Name="txtOldPasswordVisible" Visibility="Collapsed" Background="#252540" Foreground="White" BorderThickness="0" Padding="10,8" Height="32" FontFamily="Segoe UI" TextChanged="txtOldPasswordVisible_TextChanged"/>
+                                    </Grid>
+                                </Grid>
+                                
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="New Password" Foreground="#9090B0" FontSize="12" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                                    <Grid Grid.Column="1">
+                                        <PasswordBox x:Name="txtNewPassword" Background="#252540" Foreground="White" BorderThickness="0" Padding="10,8" Height="32" FontFamily="Segoe UI" PasswordChanged="txtNewPassword_PasswordChanged"/>
+                                        <TextBox x:Name="txtNewPasswordVisible" Visibility="Collapsed" Background="#252540" Foreground="White" BorderThickness="0" Padding="10,8" Height="32" FontFamily="Segoe UI" TextChanged="txtNewPasswordVisible_TextChanged"/>
+                                    </Grid>
+                                </Grid>
+                                
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Confirm Password" Foreground="#9090B0" FontSize="12" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                                    <Grid Grid.Column="1">
+                                        <PasswordBox x:Name="txtConfirmPassword" Background="#252540" Foreground="White" BorderThickness="0" Padding="10,8" Height="32" FontFamily="Segoe UI" PasswordChanged="txtConfirmPassword_PasswordChanged"/>
+                                        <TextBox x:Name="txtConfirmPasswordVisible" Visibility="Collapsed" Background="#252540" Foreground="White" BorderThickness="0" Padding="10,8" Height="32" FontFamily="Segoe UI" TextChanged="txtConfirmPasswordVisible_TextChanged"/>
+                                    </Grid>
+                                </Grid>
+                                
+                                <Grid Margin="0,0,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="chkShowPasswords" Content="Show Passwords" Foreground="#9090B0" FontSize="12" FontFamily="Segoe UI" VerticalAlignment="Center" Checked="chkShowPasswords_CheckedChanged" Unchecked="chkShowPasswords_CheckedChanged"/>
+                                    <Button x:Name="btnChangePassword" Grid.Column="1" Content="Change Password" Style="{StaticResource SecondaryBtn}" HorizontalAlignment="Right" Click="BtnChangePassword_Click"/>
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>

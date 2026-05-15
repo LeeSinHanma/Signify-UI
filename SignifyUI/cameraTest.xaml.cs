@@ -1,5 +1,7 @@
 using OpenCvSharp;
 using System;
+using System.IO;
+using System.Text.Json;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -48,7 +50,8 @@ namespace SignifyUI
 
             _predictionClient ??= new HandPredictionClient();
 
-            _capture = new VideoCapture(0);
+            int activeCameraIndex = LoadCameraIndexFromSettingsFileOrDefault();
+            _capture = new VideoCapture(activeCameraIndex);
             if (!_capture.IsOpened())
             {
                 CameraStatusText.Text = "Unable to open camera.";
@@ -237,6 +240,30 @@ namespace SignifyUI
 
             bitmap.Freeze();
             return bitmap;
+        }
+
+        private static int LoadCameraIndexFromSettingsFileOrDefault(int defaultIndex = 0)
+        {
+            try
+            {
+                if (!File.Exists("settings.json")) return defaultIndex;
+
+                string json = File.ReadAllText("settings.json");
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.TryGetProperty("ActiveCameraIndex", out var indexElement))
+                {
+                    if (indexElement.ValueKind == JsonValueKind.Number)
+                    {
+                        return indexElement.GetInt32();
+                    }
+                }
+                return defaultIndex;
+            }
+            catch
+            {
+                return defaultIndex;
+            }
         }
     }
 }

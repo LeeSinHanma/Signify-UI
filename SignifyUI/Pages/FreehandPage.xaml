@@ -210,16 +210,6 @@
                  of the camera feed. This guides the user where to
                  place their hand. Not interactive — IsHitTestVisible=False.
             ════════════════════════════════════════════════ -->
-            <Border x:Name="pnlDetectionBox"
-                    Width="200" Height="310"
-                    BorderBrush="#7B61FF"
-                    BorderThickness="2.5"
-                    CornerRadius="24"
-                    Background="Transparent"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Margin="0,0,0,70"
-                    IsHitTestVisible="False"/>
 
 
             <!-- ════════════════════════════════════════════════

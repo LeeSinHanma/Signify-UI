@@ -167,6 +167,16 @@
                         </StackPanel>
                     </Button>
 
+                    <Button x:Name="btnSpace"
+                            Style="{StaticResource SidebarActionBtn}"
+                            ToolTip="Add space"
+                            Click="btnSpace_Click">
+                        <StackPanel>
+                            <TextBlock Text="⎵" FontSize="20" HorizontalAlignment="Center" Margin="0,0,0,2"/>
+                            <TextBlock Text="SPACE" FontSize="8" HorizontalAlignment="Center" Foreground="#9090B0"/>
+                        </StackPanel>
+                    </Button>
+
                 </StackPanel>
             </Border>
 
